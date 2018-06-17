@@ -9,10 +9,16 @@ GEN_CMDS__FLAG :=
 
 ORDERED_OBJS += \
 "./PCA9685.obj" \
+"./UartSerial.obj" \
+"./encoders.obj" \
+"./motors.obj" \
+"./odometry.obj" \
+"./selfNavigation.obj" \
 "./tm4c123gh6pm_startup_ccs.obj" \
 "../tm4c123gh6pm.cmd" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
+-l"/home/kamal/ti/TivaWare_C_Series-2.1.4.178/IQmath/ccs/IQmathLib/Debug/IQmathLib.lib" \
 
 -include ../makefile.init
 
@@ -153,8 +159,8 @@ IISC_Lab.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "PCA9685.obj" "tm4c123gh6pm_startup_ccs.obj" 
-	-$(RM) "PCA9685.d" "tm4c123gh6pm_startup_ccs.d" 
+	-$(RM) "PCA9685.obj" "UartSerial.obj" "encoders.obj" "motors.obj" "odometry.obj" "selfNavigation.obj" "tm4c123gh6pm_startup_ccs.obj" 
+	-$(RM) "PCA9685.d" "UartSerial.d" "encoders.d" "motors.d" "odometry.d" "selfNavigation.d" "tm4c123gh6pm_startup_ccs.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

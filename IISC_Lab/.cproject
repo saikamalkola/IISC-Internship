@@ -72,6 +72,7 @@
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.linkerID.LIBRARY.1220787801" name="Include library file or command file as input (--library, -l)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.linkerID.LIBRARY" useByScannerDiscovery="false" valueType="libs">
 									<listOptionValue builtIn="false" value="libc.a"/>
+									<listOptionValue builtIn="false" value="/home/kamal/ti/TivaWare_C_Series-2.1.4.178/IQmath/ccs/IQmathLib/Debug/IQmathLib.lib"/>
 								</option>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.exeLinker.inputType__CMD_SRCS.549403720" name="Linker Command Files" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.exeLinker.inputType__CMD_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.exeLinker.inputType__CMD2_SRCS.33869958" name="Linker Command Files" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.exeLinker.inputType__CMD2_SRCS"/>
@@ -81,7 +82,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="encoder.c|MPU9250.c|ard.c|attachInterruptGPIO.c|Blink.c|UART.c|analogRead.c|PWM.c|TimerInt.c|seven_segment.c|UARTInt.c|interrupt.c|keypad.c|test.c|SysTickDelay.c|PLL_Config.c|pllmain.c|pll.c|GPIO.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="PCA9685SRC.c|Blink.c|attachInterruptGPIO.c|PWM_Module.c|led_PWMM.c|MPU9250.c|encoder.c|ard.c|UART.c|analogRead.c|PWM.c|TimerInt.c|seven_segment.c|UARTInt.c|interrupt.c|keypad.c|test.c|SysTickDelay.c|PLL_Config.c|pllmain.c|pll.c|GPIO.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

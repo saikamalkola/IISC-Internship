@@ -25,5 +25,6 @@
 #define M_PI_2      1.57079632679489661923  /* pi/2 */
 
 //Function definitions
-void init_timer(int time_ms);
+void init_timer0A(int time_ms);
 void TIMER0_TA_Handler(void);
+int sign(int val);

@@ -39,6 +39,7 @@ void GPIOPortE_Handler(void);
 void GPIOPortD_Handler(void);
 void GPIOPortF_Handler(void);
 void TIMER0_TA_Handler(void);
+void TIMER2_TA_Handler(void);
 
 //*****************************************************************************
 //
@@ -112,7 +113,7 @@ void (* const g_pfnVectors[])(void) =
     IntDefaultHandler,                      // Timer 0 subtimer B
     IntDefaultHandler,                      // Timer 1 subtimer A
     IntDefaultHandler,                      // Timer 1 subtimer B
-    IntDefaultHandler,                      // Timer 2 subtimer A
+    TIMER2_TA_Handler,                      // Timer 2 subtimer A
     IntDefaultHandler,                      // Timer 2 subtimer B
     IntDefaultHandler,                      // Analog Comparator 0
     IntDefaultHandler,                      // Analog Comparator 1

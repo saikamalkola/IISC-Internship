@@ -11,7 +11,7 @@
 #include "encoders.h"
 
 volatile long encoder_value[4] = { 0, 0, 0, 0 };
-volatile int lastEncoded[4] =   { 0, 0, 0, 0 };
+volatile int lastEncoded[4] = { 0, 0, 0, 0 };
 
 void GPIOPortC_Handler(void)
 {

@@ -13,6 +13,9 @@
 #include "UartSerial.h"
 #include "PCA9685.h"
 #include "odometry.h"
+#include "Ultrasonic.h"
+#include <math.h>
+#include "KinModel.h"
 
 //#include "FreeRTOS.h"
 //#include "task.h"
@@ -26,9 +29,20 @@ void EnableInterrupts(void);
 
 extern volatile long encoder_value[4];
 extern volatile int lastEncoded[4];
+extern volatile int velocity[4];
+extern volatile int velocity_error[4], PID[4];
+
 void move(float distance, int dir);
 float absolute(float val);
 int sign(int val);
+
+volatile float distance[4] = { 0, 0, 0, 0 };
+
+extern volatile float error[2];
+extern volatile float dis_PID;
+extern volatile int dir;
+extern float w[4];
+extern float V[3];
 
 extern struct Position
 {
@@ -45,89 +59,204 @@ int main()
     UART_Init();    //Initialising UART
     init_I2C1();
     init_PCA9685();
-    init_timer(50);
+    init_timer0A(50);
+    init_timer1A();
+    Ultrasonic_Init();
+    init_timer2A(500);
     EnableInterrupts();
-    int i = 0, j = 0;
+
     while (1)
     {
-        SerialPrintInt(position.x);
-        UART_OutChar('\t');
-        SerialPrintInt(position.y);
-        UART_OutChar('\t');
-        SerialPrintInt(position.theta);
-        UART_OutChar('\n');
-        move(500, 1);
-        delayMs(500);
-        move(500, -2);
-        delayMs(500);
-        move(500, -1);
-        delayMs(500);
-        move(500, 2);
-        delayMs(500);
+        int i = 0;
+//        SerialPrintInt(position.x);
+//        UART_OutChar('\t');
+//        SerialPrintInt(position.y);
+//        UART_OutChar('\t');
+//        SerialPrintInt(position.theta);
+
+//        for(i = 0; i < 4; i++)
+//        {
+//            SerialPrintInt(PID[i]);
+//            UART_OutChar('\t');
+//        }
+//        UART_OutChar('\n');
+        set_motor(0, 100);
+//        set_motor(1, 100);
+//        set_motor(2, 100);
+//        set_motor(3, 100);
+//        V[0] = 1;
+//        V[1] = 0;
+//        V[2] = 0;
+//        set_velocity();
+//        for(i = 0; i < 4; i++)
+//        {
+//            SerialPrintInt(w[i]);
+//            UART_OutChar('\t');
+//        }
+//        UART_OutChar('\n');
+//        delayMs(2000);
+//        V[0] = 0;
+//        V[1] = 1;
+//        V[2] = 0;
+//        set_velocity();
+//        delayMs(2000);
+//        for(i = 0; i < 4; i++)
+//        {
+//            SerialPrintInt(w[i]);
+//            UART_OutChar('\t');
+//        }
+//        UART_OutChar('\n');
+//        V[0] = 0;
+//        V[1] = 0;
+//        V[2] = 60;
+//        set_velocity();
+//        delayMs(2000);
+//        for(i = 0; i < 4; i++)
+//        {
+//            SerialPrintInt(w[i]);
+//            UART_OutChar('\t');
+//        }
+//        UART_OutChar('\n');
+//// 51200 21305
+//          dir = 1;
+//         // delayMs(10000);
+//          dir = 2;
+//          delayMs(10000);
+//        UART_OutChar('F');
+
+//        dir = 1;
+//        move(51200, 1);
+//        //   delayMs(500);
+////        UART_OutChar('R');
+//        dir = -2;
+//        move(21305, -2);
+        //   delayMs(500);
+////        UART_OutChar('B');
+//        dir = -1;
+//        move(51200, -1);
+//     //   delayMs(500);
+////        UART_OutChar('L');
+//        dir = 2;
+//        move(21305, 2);
+//       // delayMs(500);
+//        UART_OutChar('\n');
     }
 }
 
 void move(float distance, int dir)
 {
+    int i = 0;
     float current = 0, previous = 0;
-    switch(dir)
+    switch (dir)
     {
     case 1:
     {
+        for (i = 0; i <= 100; i++)
+        {
+            set_motor(2, -i);
+            set_motor(3, i);
+            delayMs(1);
+        }
         previous = position.y;
         current = previous;
-        while((current - previous) < distance)
+        while ((current - previous) < distance)
         {
             current = position.y;
-            motor(2, 11000);
-            motor(3, -11000);
+            set_motor(2, -100);
+            set_motor(3, 100);
+//            motor(2, 12000 + 1000);
+//            motor(3, -11000);
         }
-        motor(2,0);
-        motor(3,0);
+        for (i = 100; i >= 0; i--)
+        {
+            set_motor(2, -i);
+            set_motor(3, i);
+            delayMs(1);
+        }
+//        motor(2,0);
+//        motor(3,0);
     }
-    break;
+        break;
     case -1:
     {
+        for (i = 0; i <= 100; i++)
+        {
+            set_motor(2, i);
+            set_motor(3, -i);
+            delayMs(1);
+        }
         previous = position.y;
         current = previous;
-        while((previous - current) < distance)
+        while ((previous - current) < distance)
         {
             current = position.y;
-            motor(2, -11000);
-            motor(3, 11000);
+            set_motor(2, 100);
+            set_motor(3, -100);
+//            motor(2, -11000);
+//            motor(3, 11000);
         }
-        motor(2,0);
-        motor(3,0);
+        for (i = 100; i >= 0; i--)
+        {
+            set_motor(2, i);
+            set_motor(3, -i);
+            delayMs(1);
+        }
+//        motor(2,0);
+//        motor(3,0);
     }
-    break;
+        break;
     case 2:
     {
+        for (i = 0; i <= 100; i++)
+        {
+            set_motor(0, i);
+            set_motor(1, -i);
+            delayMs(1);
+        }
         previous = position.x;
         current = previous;
-        while((current - previous) < distance)
+        while ((current - previous) < distance)
         {
             current = position.x;
-            motor(0, -11000);
-            motor(1, 11000);
+            set_motor(0, 100);
+            set_motor(1, -100);
+//            motor(0, -11000);
+//            motor(1, 11000);
         }
-        motor(0,0);
-        motor(1,0);
+        for (i = 100; i >= 0; i--)
+        {
+            set_motor(0, i);
+            set_motor(1, -i);
+            delayMs(1);
+        }
     }
-    break;
+        break;
     case -2:
     {
+        for (i = 0; i <= 100; i++)
+        {
+            set_motor(0, -i);
+            set_motor(1, i);
+            delayMs(1);
+        }
         previous = position.x;
         current = previous;
-        while((previous - current) < distance)
+        while ((previous - current) < distance)
         {
             current = position.x;
-            motor(0, 11000);
-            motor(1, -11000);
+            set_motor(0, -100);
+            set_motor(1, 100);
+//            motor(0, 11000);
+//            motor(1, -11000);
         }
-        motor(0,0);
-        motor(1,0);
+        for (i = 100; i >= 0; i--)
+        {
+            set_motor(0, -i);
+            set_motor(1, i);
+            delayMs(1);
+        }
     }
-    break;
+        break;
     }
 }
 

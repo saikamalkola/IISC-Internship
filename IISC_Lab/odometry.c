@@ -9,13 +9,20 @@
 #include <stdint.h>
 #include "inc/tm4c123gh6pm.h"
 #include "odometry.h"
-#include "math.h"
+#include <math.h>
+#include "motors.h"
+#include "PCA9685.h"
 
 extern volatile long encoder_value[4];
 const float K = 0.261799;    //(PI*D/N)
+const float N = 1200;
 const float d = 291;  //in metres
-
-volatile int state = 0;
+volatile int velocity[4] = { 0, 0, 0, 0 };    //Actual RPM of motors
+volatile int desired_velocity[4] = { 0, 0, 0, 0 };
+volatile int PID[4] = { 0, 0, 0, 0 }, P[4] = { 0, 0, 0, 0 };
+volatile int D[4] = { 0, 0, 0, 0 };
+volatile int Kp[4] = { 80, 80, 80, 80 }, Kd[4] = { 10, 10, 10, 10 };
+volatile int velocity_error[4] = { 0, 0, 0, 0 }, last_velocity_error[4] = { 0, 0, 0, 0 };
 
 struct Position
 {
@@ -27,32 +34,44 @@ struct Position
 void TIMER0_TA_Handler(void)
 {
     int i = 0;
-    float d_F = 0, d_B = 0, d_L = 0, d_R = 0, d_FB = 0, d_LR = 0, theta_FB = 0, theta_LR = 0, d_theta = 0;
+    float d_F = 0, d_B = 0, d_L = 0, d_R = 0, d_FB = 0, d_LR = 0, theta_FB = 0,
+            theta_LR = 0, d_theta = 0;
 
-    d_F = K*encoder_value[0];
-    d_B = K*encoder_value[1];
-    d_L = K*encoder_value[2];
-    d_R = K*encoder_value[3];
+    d_F = K * encoder_value[0];
+    d_B = K * encoder_value[1];
+    d_L = K * encoder_value[2];
+    d_R = K * encoder_value[3];
 
     d_FB = (d_F - d_B) * 0.5;
     d_LR = (d_R - d_L) * 0.5;
 
     theta_FB = (d_F + d_B) / d;
     theta_LR = (d_L + d_R) / d;
-//
-    d_theta = (theta_FB + theta_FB) * 0.5;
-//
+    d_theta = (theta_FB + theta_LR) * 0.5;
     d_theta = d_theta * 0.5;
 
-//    position.x += d_FB;//(d_FB * cosf(position.theta + d_theta)) + (d_LR * cosf(position.theta + M_PI_2 + d_theta));
-//    position.y += d_LR;//(d_FB * sinf(position.theta + d_theta)) + (d_LR * sinf(position.theta + M_PI_2 + d_theta));
-//    position.theta += ((theta_FB + theta_FB) / 2);
-    position.x += (d_FB * cosf(position.theta + d_theta)) + (d_LR * cosf(position.theta + M_PI_2 + d_theta));
-    position.y += (d_FB * sinf(position.theta + d_theta)) + (d_LR * sinf(position.theta + M_PI_2 + d_theta));
-    position.theta += ((theta_FB + theta_FB) / 2);
+    position.x += d_FB;//(d_FB * cosf(position.theta + d_theta)) + (d_LR * cosf(position.theta + M_PI_2 + d_theta));
+    position.y += d_LR;//(d_FB * sinf(position.theta + d_theta)) + (d_LR * sinf(position.theta + M_PI_2 + d_theta));
+    position.theta += ((theta_FB + theta_LR) / 2);
+//    position.x += (d_FB * cosf(position.theta + d_theta))
+//            + (d_LR * cosf(position.theta + M_PI_2 + d_theta));
+//    position.y += (d_FB * sinf(position.theta + d_theta))
+//            + (d_LR * sinf(position.theta + M_PI_2 + d_theta));
+//    position.theta += ((theta_FB + theta_LR) / 2);
 
-    for( i = 0; i < 4; i++)
+    for (i = 0; i < 4; i++)
     {
+        velocity[i] = encoder_value[i]; //In RPM Conversion factor = (60*1000)/(1200*50) = 1
+        velocity_error[i] = desired_velocity[i] - velocity[i];
+        P[i] = Kp[i] * velocity_error[i];
+        D[i] = Kd[i] * (velocity_error[i] - last_velocity_error[i]);
+        last_velocity_error[i] = velocity_error[i];
+        PID[i] = P[i] + D[i];
+        if (abs(PID[i]) > 10000)
+        {
+            PID[i] = sign(PID[i]) * 10000;
+        }
+        motor(i, -PID[i]);
         encoder_value[i] = 0;
     }
     volatile int read_back = 0;
@@ -60,7 +79,12 @@ void TIMER0_TA_Handler(void)
     read_back = TIMER0_ICR_R;
 }
 
-void init_timer(int time_ms)
+int sign(int val)
+{
+    return (val < 0) ? -1 : (val > 0);
+}
+
+void init_timer0A(int time_ms)
 {
     SYSCTL_RCGCTIMER_R |= 0x01;
     TIMER0_CTL_R &= ~(TAEN);    //Disabling Timer A
@@ -72,9 +96,9 @@ void init_timer(int time_ms)
     uint32_t load_register = (time_ms * 16 * 1000 / 256) - 1; //Calculating ticks required at 16MHz
     TIMER0_TAPR_R = 0xFF;
     TIMER0_TAILR_R = load_register;
-    TIMER0_ICR_R = 0x01;
+    TIMER0_ICR_R |= 0x01;
     TIMER0_CTL_R |= TAEN;    //Enabling Timer A
     TIMER0_IMR_R |= TATORIM;    //Enabling Interrupt Timerout
-    NVIC_PRI4_R = (NVIC_PRI4_R & 0x1FFFFFFF) | 0xA0000000;
+    NVIC_PRI4_R = (NVIC_PRI4_R & 0x1FFFFFFF) | 0x20000000;
     NVIC_EN0_R = (1 << 19);
 }

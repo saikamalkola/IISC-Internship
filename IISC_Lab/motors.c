@@ -10,13 +10,19 @@
 #include "inc/tm4c123gh6pm.h"
 #include "motors.h"
 
+extern volatile int desired_velocity[4];
+
 void motors(int *value)
 {
-    int i = 0;
-    for (i = 0; i < 4; i++)
-    {
-        motor(i, value[i]);
-    }
+    set_motor(0, value[2]);
+    set_motor(1, value[0]);
+    set_motor(2, value[3]);
+    set_motor(3, value[1]);
+}
+
+void set_motor(uint8_t index, int set_point)
+{
+    desired_velocity[index] = set_point;
 }
 
 void motor(uint8_t index, int value)
@@ -36,6 +42,8 @@ void motor(uint8_t index, int value)
     {
         value = 15999;
     }
+
+    value = 16000 - value;
 
     if (index >= 4)
     {

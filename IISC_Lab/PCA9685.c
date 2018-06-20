@@ -102,12 +102,20 @@ void PCA9685_digitalWrite(uint8_t pin, uint8_t state)
     {
     case 1:
     {
-        PCA9685_analogWrite(pin, 0, 4095);
+        wireSend(LED0_ON_L + 4 * pin, (1 << 0) | (1 << 1));
+        wireSend(0, (1 << 0));
+        wireSend(1 << 4, (1 << 0));
+        wireSend(0, (1 << 0));
+        wireSend(0, (1 << 0) | (1 << 2));
     }
     break;
     case 0:
     {
-        PCA9685_analogWrite(pin, 4095, 0);
+        wireSend(LED0_ON_L + 4 * pin, (1 << 0) | (1 << 1));
+        wireSend(0, (1 << 0));
+        wireSend(0, (1 << 0));
+        wireSend(0, (1 << 0));
+        wireSend(1 << 4, (1 << 0) | (1 << 2));
     }
     break;
     }

@@ -54,92 +54,58 @@ extern struct Position
 int main()
 {
     //DisableInterrupts();
+    Ultrasonic_Init();
     init_encoders();    //Initializing Encoder Pins
     init_motors();  //Initializing Motor Pins
     UART_Init();    //Initialising UART
     init_I2C1();
     init_PCA9685();
-    init_timer0A(50);
+    init_timer0A(25);
     init_timer1A();
-    Ultrasonic_Init();
-    init_timer2A(500);
+    init_timer2A(25);
     EnableInterrupts();
 
     while (1)
     {
         int i = 0;
+        //set_motor(0,100);
 //        SerialPrintInt(position.x);
 //        UART_OutChar('\t');
 //        SerialPrintInt(position.y);
 //        UART_OutChar('\t');
 //        SerialPrintInt(position.theta);
+        float a = 4;
+        a = sqrt(a);
+        for(i = 0; i < 4; i++)
+        {
+            SerialPrintInt(distance[i]);
+            UART_OutChar('\t');
+        }
+        UART_OutChar('\n');
 
-//        for(i = 0; i < 4; i++)
-//        {
-//            SerialPrintInt(PID[i]);
-//            UART_OutChar('\t');
-//        }
-//        UART_OutChar('\n');
-        set_motor(0, 100);
-//        set_motor(1, 100);
-//        set_motor(2, 100);
-//        set_motor(3, 100);
-//        V[0] = 1;
-//        V[1] = 0;
-//        V[2] = 0;
-//        set_velocity();
-//        for(i = 0; i < 4; i++)
-//        {
-//            SerialPrintInt(w[i]);
-//            UART_OutChar('\t');
-//        }
-//        UART_OutChar('\n');
-//        delayMs(2000);
-//        V[0] = 0;
-//        V[1] = 1;
-//        V[2] = 0;
-//        set_velocity();
-//        delayMs(2000);
-//        for(i = 0; i < 4; i++)
-//        {
-//            SerialPrintInt(w[i]);
-//            UART_OutChar('\t');
-//        }
-//        UART_OutChar('\n');
-//        V[0] = 0;
-//        V[1] = 0;
-//        V[2] = 60;
-//        set_velocity();
-//        delayMs(2000);
-//        for(i = 0; i < 4; i++)
-//        {
-//            SerialPrintInt(w[i]);
-//            UART_OutChar('\t');
-//        }
-//        UART_OutChar('\n');
-//// 51200 21305
+////// 51200 21305
 //          dir = 1;
 //         // delayMs(10000);
 //          dir = 2;
 //          delayMs(10000);
-//        UART_OutChar('F');
+        UART_OutChar('F');
 
-//        dir = 1;
-//        move(51200, 1);
-//        //   delayMs(500);
-////        UART_OutChar('R');
-//        dir = -2;
-//        move(21305, -2);
+        dir = 1;
+        move(500, 1);
         //   delayMs(500);
-////        UART_OutChar('B');
-//        dir = -1;
-//        move(51200, -1);
-//     //   delayMs(500);
-////        UART_OutChar('L');
-//        dir = 2;
-//        move(21305, 2);
-//       // delayMs(500);
-//        UART_OutChar('\n');
+//        UART_OutChar('R');
+        dir = -2;
+        move(500, -2);
+           delayMs(500);
+//        UART_OutChar('B');
+        dir = -1;
+        move(500, -1);
+     //   delayMs(500);
+//        UART_OutChar('L');
+        dir = 2;
+        move(500, 2);
+       // delayMs(500);
+        UART_OutChar('\n');
     }
 }
 

@@ -100,5 +100,5 @@ void init_timer0A(int time_ms)
     TIMER0_CTL_R |= TAEN;    //Enabling Timer A
     TIMER0_IMR_R |= TATORIM;    //Enabling Interrupt Timerout
     NVIC_PRI4_R = (NVIC_PRI4_R & 0x1FFFFFFF) | 0x20000000;
-    NVIC_EN0_R = (1 << 19);
+    NVIC_EN0_R |= (1 << 19);
 }

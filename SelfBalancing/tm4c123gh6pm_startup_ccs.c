@@ -33,14 +33,9 @@ void ResetISR(void);
 static void NmiSR(void);
 static void FaultISR(void);
 static void IntDefaultHandler(void);
-//void TIMER0_TA_Handler(void);
-void GPIOPortC_Handler(void);
-void GPIOPortE_Handler(void);
-void GPIOPortD_Handler(void);
-void GPIOPortF_Handler(void);
+
 void TIMER0_TA_Handler(void);
-void TIMER2_TA_Handler(void);
-void TIMER1_TA_Handler(void);
+void GPIOPortC_Handler(void);
 
 //*****************************************************************************
 //
@@ -93,9 +88,9 @@ void (* const g_pfnVectors[])(void) =
     IntDefaultHandler,                      // The SysTick handler
     IntDefaultHandler,                      // GPIO Port A
     IntDefaultHandler,                      // GPIO Port B
-    GPIOPortC_Handler,                      // GPIO Port C
-    GPIOPortD_Handler,                      // GPIO Port D
-    GPIOPortE_Handler,                      // GPIO Port E
+    IntDefaultHandler,                      // GPIO Port C
+    IntDefaultHandler,                      // GPIO Port D
+    IntDefaultHandler,                      // GPIO Port E
     IntDefaultHandler,                      // UART0 Rx and Tx
     IntDefaultHandler,                      // UART1 Rx and Tx
     IntDefaultHandler,                      // SSI0 Rx and Tx
@@ -112,16 +107,16 @@ void (* const g_pfnVectors[])(void) =
     IntDefaultHandler,                      // Watchdog timer
     TIMER0_TA_Handler,                      // Timer 0 subtimer A
     IntDefaultHandler,                      // Timer 0 subtimer B
-    TIMER1_TA_Handler,                      // Timer 1 subtimer A
+    IntDefaultHandler,                      // Timer 1 subtimer A
     IntDefaultHandler,                      // Timer 1 subtimer B
-    TIMER2_TA_Handler,                      // Timer 2 subtimer A
+    IntDefaultHandler,                      // Timer 2 subtimer A
     IntDefaultHandler,                      // Timer 2 subtimer B
     IntDefaultHandler,                      // Analog Comparator 0
     IntDefaultHandler,                      // Analog Comparator 1
     IntDefaultHandler,                      // Analog Comparator 2
     IntDefaultHandler,                      // System Control (PLL, OSC, BO)
     IntDefaultHandler,                      // FLASH Control
-    GPIOPortF_Handler,                      // GPIO Port F
+    IntDefaultHandler,                      // GPIO Port F
     IntDefaultHandler,                      // GPIO Port G
     IntDefaultHandler,                      // GPIO Port H
     IntDefaultHandler,                      // UART2 Rx and Tx

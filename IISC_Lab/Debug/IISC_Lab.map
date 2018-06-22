@@ -1,32 +1,33 @@
 ******************************************************************************
                   TI ARM Linker Unix v16.9.6                   
 ******************************************************************************
->> Linked Wed Jun 20 18:13:20 2018
+>> Linked Thu Jun 21 16:49:48 2018
 
 OUTPUT FILE NAME:   <IISC_Lab.out>
-ENTRY POINT SYMBOL: "_c_int00"  address: 00002265
+ENTRY POINT SYMBOL: "_c_int00"  address: 000028cd
 
 
 MEMORY CONFIGURATION
 
          name            origin    length      used     unused   attr    fill
 ----------------------  --------  ---------  --------  --------  ----  --------
-  FLASH                 00000000   00040000  00002420  0003dbe0  R  X
-  SRAM                  20000000   00008000  00000314  00007cec  RW X
+  FLASH                 00000000   00040000  00002aca  0003d536  R  X
+  SRAM                  20000000   00008000  00000340  00007cc0  RW X
 
 
 SEGMENT ALLOCATION MAP
 
 run origin  load origin   length   init length attrs members
 ----------  ----------- ---------- ----------- ----- -------
-00000000    00000000    00002420   00002420    r-x
+00000000    00000000    00002ad0   00002ad0    r-x
   00000000    00000000    0000026c   0000026c    r-- .intvecs
-  0000026c    0000026c    00002170   00002170    r-x .text
-  000023dc    000023dc    0000000c   0000000c    r-- .const
-  000023e8    000023e8    00000038   00000038    r-- .cinit
-20000000    20000000    00000314   00000000    rw-
+  0000026c    0000026c    00002802   00002802    r-x .text
+  00002a70    00002a70    0000000c   0000000c    r-- .const
+  00002a80    00002a80    00000050   00000050    r-- .cinit
+20000000    20000000    00000340   00000000    rw-
   20000000    20000000    00000200   00000000    rw- .stack
-  20000200    20000200    00000114   00000000    rw- .data
+  20000200    20000200    00000120   00000000    rw- .data
+  20000320    20000320    00000020   00000000    rw- .bss
 
 
 SECTION ALLOCATION MAP
@@ -37,197 +38,232 @@ section   page    origin      length       input sections
 .intvecs   0    00000000    0000026c     
                   00000000    0000026c     tm4c123gh6pm_startup_ccs.obj (.intvecs)
 
-.text      0    0000026c    00002170     
-                  0000026c    000006d8     Ultrasonic.obj (.text)
-                  00000944    000005c8     encoders.obj (.text)
-                  00000f0c    00000418     motors.obj (.text)
-                  00001324    000003a8     odometry.obj (.text)
-                  000016cc    00000344     selfNavigation.obj (.text)
-                  00001a10    00000320     PCA9685.obj (.text)
-                  00001d30    00000254     UartSerial.obj (.text)
-                  00001f84    000000fc     rtsv7M4_T_le_v4SPD16_eabi.lib : fd_mul_t2.obj (.text)
-                  00002080    0000009c                                   : memcpy_t2.obj (.text)
-                  0000211c    00000070                                   : autoinit.obj (.text)
-                  0000218c    0000006e                                   : fd_tos_t2.obj (.text)
-                  000021fa    00000068                                   : copy_decompress_lzss.obj (.text:decompress:lzss)
-                  00002262    00000002                                   : mpu_init.obj (.text)
-                  00002264    00000054                                   : boot.obj (.text)
-                  000022b8    00000054                                   : exit.obj (.text)
-                  0000230c    0000004c                                   : cpy_tbl.obj (.text)
-                  00002358    00000038                                   : fs_tod_t2.obj (.text)
-                  00002390    00000018                                   : args_main.obj (.text)
-                  000023a8    00000014                                   : _lock.obj (.text)
-                  000023bc    0000000e                                   : copy_decompress_none.obj (.text:decompress:none)
-                  000023ca    0000000c     tm4c123gh6pm_startup_ccs.obj (.text)
-                  000023d6    00000004     rtsv7M4_T_le_v4SPD16_eabi.lib : pre_init.obj (.text)
-                  000023da    00000002                                   : startup.obj (.text)
+.text      0    0000026c    00002802     
+                  0000026c    00000784     Ultrasonic.obj (.text)
+                  000009f0    00000694     encoders.obj (.text)
+                  00001084    00000418     motors.obj (.text)
+                  0000149c    00000408     selfNavigation.obj (.text)
+                  000018a4    000003ac     odometry.obj (.text)
+                  00001c50    00000320     PCA9685.obj (.text)
+                  00001f70    00000254     UartSerial.obj (.text)
+                  000021c4    000001b6     rtsv7M4_T_le_v4SPD16_eabi.lib : fd_add_t2.obj (.text)
+                  0000237a    00000002                                   : mpu_init.obj (.text)
+                  0000237c    00000170                                   : e_sqrt.obj (.text)
+                  000024ec    000000fc                                   : fd_mul_t2.obj (.text)
+                  000025e8    0000009c                                   : memcpy_t2.obj (.text)
+                  00002684    00000086                                   : fd_cmp_t2.obj (.text:__aeabi_cdrcmple)
+                  0000270a    0000007a                                   : memset_t2.obj (.text)
+                  00002784    00000070                                   : autoinit.obj (.text)
+                  000027f4    0000006e                                   : fd_tos_t2.obj (.text)
+                  00002862    00000068                                   : copy_decompress_lzss.obj (.text:decompress:lzss)
+                  000028ca    00000002                                   : startup.obj (.text)
+                  000028cc    00000054                                   : boot.obj (.text)
+                  00002920    00000054                                   : exit.obj (.text)
+                  00002974    0000004c                                   : cpy_tbl.obj (.text)
+                  000029c0    00000038                                   : fs_tod_t2.obj (.text)
+                  000029f8    00000020                                   : u_tofd_t2.obj (.text)
+                  00002a18    00000018                                   : args_main.obj (.text)
+                  00002a30    00000014                                   : _lock.obj (.text)
+                  00002a44    0000000e                                   : copy_decompress_none.obj (.text:decompress:none)
+                  00002a52    0000000c                                   : copy_zero_init.obj (.text:decompress:ZI)
+                  00002a5e    0000000c     tm4c123gh6pm_startup_ccs.obj (.text)
+                  00002a6a    00000004     rtsv7M4_T_le_v4SPD16_eabi.lib : pre_init.obj (.text)
 
-.const     0    000023dc    0000000c     
-                  000023dc    0000000c     odometry.obj (.const)
+.const     0    00002a70    0000000c     
+                  00002a70    0000000c     odometry.obj (.const)
 
-.cinit     0    000023e8    00000038     
-                  000023e8    00000027     (.cinit..data.load) [load image, compression = lzss]
-                  0000240f    00000001     --HOLE-- [fill = 0]
-                  00002410    00000008     (__TI_handler_table)
-                  00002418    00000008     (__TI_cinit_table)
+.cinit     0    00002a80    00000050     
+                  00002a80    00000027     (.cinit..data.load) [load image, compression = lzss]
+                  00002aa7    00000001     --HOLE-- [fill = 0]
+                  00002aa8    0000000c     (__TI_handler_table)
+                  00002ab4    00000004     --HOLE-- [fill = 0]
+                  00002ab8    00000008     (.cinit..bss.load) [load image, compression = zero_init]
+                  00002ac0    00000010     (__TI_cinit_table)
 
 .init_array 
 *          0    00000000    00000000     UNINITIALIZED
 
-.data      0    20000200    00000114     UNINITIALIZED
-                  20000200    00000020     Ultrasonic.obj (.data)
-                  20000220    00000010     odometry.obj (.data:D)
-                  20000230    00000010     odometry.obj (.data:Kd)
-                  20000240    00000010     odometry.obj (.data:Kp)
-                  20000250    00000010     odometry.obj (.data:P)
-                  20000260    00000010     odometry.obj (.data:PID)
-                  20000270    00000010     odometry.obj (.data:desired_velocity)
-                  20000280    00000010     selfNavigation.obj (.data:distance)
-                  20000290    00000010     encoders.obj (.data:encoder_value)
-                  200002a0    00000010     encoders.obj (.data:lastEncoded)
-                  200002b0    00000010     odometry.obj (.data:last_velocity_error)
-                  200002c0    00000010     odometry.obj (.data:velocity)
-                  200002d0    00000010     odometry.obj (.data:velocity_error)
-                  200002e0    0000000c     rtsv7M4_T_le_v4SPD16_eabi.lib : exit.obj (.data:$O1$$)
-                  200002ec    0000000c     odometry.obj (.data:position)
-                  200002f8    00000008     rtsv7M4_T_le_v4SPD16_eabi.lib : _lock.obj (.data:$O1$$)
-                  20000300    00000008     Ultrasonic.obj (.data:error)
-                  20000308    00000008     Ultrasonic.obj (.data:last_error)
-                  20000310    00000004     rtsv7M4_T_le_v4SPD16_eabi.lib : stkdepth_vars.obj (.data)
+.data      0    20000200    00000120     UNINITIALIZED
+                  20000200    00000028     Ultrasonic.obj (.data)
+                  20000228    00000010     odometry.obj (.data:D)
+                  20000238    00000010     odometry.obj (.data:Kd)
+                  20000248    00000010     odometry.obj (.data:Kp)
+                  20000258    00000010     odometry.obj (.data:P)
+                  20000268    00000010     odometry.obj (.data:PID)
+                  20000278    00000010     odometry.obj (.data:desired_velocity)
+                  20000288    00000010     selfNavigation.obj (.data:distance)
+                  20000298    00000010     encoders.obj (.data:encoder_value)
+                  200002a8    00000010     encoders.obj (.data:lastEncoded)
+                  200002b8    00000010     odometry.obj (.data:last_velocity_error)
+                  200002c8    00000010     odometry.obj (.data:velocity)
+                  200002d8    00000010     odometry.obj (.data:velocity_error)
+                  200002e8    0000000c     rtsv7M4_T_le_v4SPD16_eabi.lib : exit.obj (.data:$O1$$)
+                  200002f4    0000000c     odometry.obj (.data:position)
+                  20000300    00000008     rtsv7M4_T_le_v4SPD16_eabi.lib : _lock.obj (.data:$O1$$)
+                  20000308    00000008     Ultrasonic.obj (.data:error)
+                  20000310    00000008     Ultrasonic.obj (.data:last_error)
+                  20000318    00000004     rtsv7M4_T_le_v4SPD16_eabi.lib : errno.obj (.data)
+                  2000031c    00000004                                   : stkdepth_vars.obj (.data)
+
+.bss       0    20000320    00000020     UNINITIALIZED
+                  20000320    00000010     (.common:echo_end)
+                  20000330    00000010     (.common:echo_start)
 
 .stack     0    20000000    00000200     UNINITIALIZED
                   20000000    00000200     --HOLE--
 
 MODULE SUMMARY
 
-       Module                         code   ro data   rw data
-       ------                         ----   -------   -------
+       Module                         code    ro data   rw data
+       ------                         ----    -------   -------
     ./
-       Ultrasonic.obj                 1752   0         48     
-       encoders.obj                   1480   0         32     
-       odometry.obj                   936    12        156    
-       motors.obj                     1048   0         0      
-       selfNavigation.obj             836    0         16     
-       PCA9685.obj                    800    0         0      
-       tm4c123gh6pm_startup_ccs.obj   12     620       0      
-       UartSerial.obj                 596    0         0      
-    +--+------------------------------+------+---------+---------+
-       Total:                         7460   632       252    
-                                                              
+       Ultrasonic.obj                 1924    0         56     
+       encoders.obj                   1684    0         64     
+       odometry.obj                   940     12        156    
+       motors.obj                     1048    0         0      
+       selfNavigation.obj             1032    0         16     
+       PCA9685.obj                    800     0         0      
+       tm4c123gh6pm_startup_ccs.obj   12      620       0      
+       UartSerial.obj                 596     0         0      
+    +--+------------------------------+-------+---------+---------+
+       Total:                         8036    632       292    
+                                                               
     /home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/lib/rtsv7M4_T_le_v4SPD16_eabi.lib
-       fd_mul_t2.obj                  252    0         0      
-       memcpy_t2.obj                  156    0         0      
-       autoinit.obj                   112    0         0      
-       fd_tos_t2.obj                  110    0         0      
-       copy_decompress_lzss.obj       104    0         0      
-       exit.obj                       84     0         12     
-       boot.obj                       84     0         0      
-       cpy_tbl.obj                    76     0         0      
-       fs_tod_t2.obj                  56     0         0      
-       _lock.obj                      20     0         8      
-       args_main.obj                  24     0         0      
-       copy_decompress_none.obj       14     0         0      
-       pre_init.obj                   4      0         0      
-       stkdepth_vars.obj              0      0         4      
-       mpu_init.obj                   2      0         0      
-       startup.obj                    2      0         0      
-    +--+------------------------------+------+---------+---------+
-       Total:                         1100   0         24     
-                                                              
-       Stack:                         0      0         512    
-       Linker Generated:              0      55        0      
-    +--+------------------------------+------+---------+---------+
-       Grand Total:                   8560   687       788    
+       fd_add_t2.obj                  438     0         0      
+       e_sqrt.obj                     368     0         0      
+       fd_mul_t2.obj                  252     0         0      
+       memcpy_t2.obj                  156     0         0      
+       fd_cmp_t2.obj                  134     0         0      
+       memset_t2.obj                  122     0         0      
+       autoinit.obj                   112     0         0      
+       fd_tos_t2.obj                  110     0         0      
+       copy_decompress_lzss.obj       104     0         0      
+       exit.obj                       84      0         12     
+       boot.obj                       84      0         0      
+       cpy_tbl.obj                    76      0         0      
+       fs_tod_t2.obj                  56      0         0      
+       u_tofd_t2.obj                  32      0         0      
+       _lock.obj                      20      0         8      
+       args_main.obj                  24      0         0      
+       copy_decompress_none.obj       14      0         0      
+       copy_zero_init.obj             12      0         0      
+       errno.obj                      0       0         4      
+       pre_init.obj                   4       0         0      
+       stkdepth_vars.obj              0       0         4      
+       mpu_init.obj                   2       0         0      
+       startup.obj                    2       0         0      
+    +--+------------------------------+-------+---------+---------+
+       Total:                         2206    0         28     
+                                                               
+       Stack:                         0       0         512    
+       Linker Generated:              0       75        0      
+    +--+------------------------------+-------+---------+---------+
+       Grand Total:                   10242   707       832    
 
 
 LINKER GENERATED COPY TABLES
 
-__TI_cinit_table @ 00002418 records: 1, size/record: 8, table size: 8
-	.data: load addr=000023e8, load size=00000027 bytes, run addr=20000200, run size=00000114 bytes, compression=lzss
+__TI_cinit_table @ 00002ac0 records: 2, size/record: 8, table size: 16
+	.data: load addr=00002a80, load size=00000027 bytes, run addr=20000200, run size=00000120 bytes, compression=lzss
+	.bss: load addr=00002ab8, load size=00000008 bytes, run addr=20000320, run size=00000020 bytes, compression=zero_init
 
 
 LINKER GENERATED HANDLER TABLE
 
-__TI_handler_table @ 00002410 records: 2, size/record: 4, table size: 8
+__TI_handler_table @ 00002aa8 records: 3, size/record: 4, table size: 12
 	index: 0, handler: __TI_decompress_lzss
 	index: 1, handler: __TI_decompress_none
+	index: 2, handler: __TI_zero_init
 
 
 GLOBAL SYMBOLS: SORTED ALPHABETICALLY BY Name 
 
 address   name                           
 -------   ----                           
-000022b9  C$$EXIT                        
-20000220  D                              
-000019ff  DisableInterrupts              
-00001a03  EnableInterrupts               
-00000945  GPIOPortC_Handler              
-00000a9d  GPIOPortD_Handler              
-000009f1  GPIOPortE_Handler              
-00000b4d  GPIOPortF_Handler              
-00001b1b  I2CwriteByte                   
-000023dc  K                              
-20000230  Kd                             
-20000240  Kp                             
-000023e0  N                              
-20000250  P                              
-00001bd5  PCA9685_analogWrite            
-00001b51  PCA9685_digitalWrite           
-20000260  PID                            
-000023cb  ResetISR                       
+00002921  C$$EXIT                        
+20000228  D                              
+00001893  DisableInterrupts              
+00001897  EnableInterrupts               
+000009f1  GPIOPortC_Handler              
+00000b4d  GPIOPortD_Handler              
+00000a9d  GPIOPortE_Handler              
+00000cbd  GPIOPortF_Handler              
+00001d5b  I2CwriteByte                   
+00002a70  K                              
+20000238  Kd                             
+20000248  Kp                             
+00002a74  N                              
+20000258  P                              
+00001e15  PCA9685_analogWrite            
+00001d91  PCA9685_digitalWrite           
+20000268  PID                            
+00002a5f  ResetISR                       
 UNDEFED   SHT$$INIT_ARRAY$$Base          
 UNDEFED   SHT$$INIT_ARRAY$$Limit         
-00001e05  SerialAvailable                
-00001d31  SerialPrintInt                 
-00001325  TIMER0_TA_Handler              
-0000026d  TIMER2_TA_Handler              
-00001df1  UART_InChar                    
-00001e97  UART_Init                      
-00001e17  UART_OutChar                   
-00000779  Ultrasonic_Init                
+00002045  SerialAvailable                
+00001f71  SerialPrintInt                 
+000018a5  TIMER0_TA_Handler              
+00000285  TIMER1_TA_Handler              
+000002b1  TIMER2_TA_Handler              
+00002031  UART_InChar                    
+000020d7  UART_Init                      
+00002057  UART_OutChar                   
+000007c1  Ultrasonic_Init                
 20000200  __STACK_END                    
 00000200  __STACK_SIZE                   
 20000200  __STACK_TOP                    
-00002418  __TI_CINIT_Base                
-00002420  __TI_CINIT_Limit               
-00002410  __TI_Handler_Table_Base        
-00002418  __TI_Handler_Table_Limit       
-0000211d  __TI_auto_init                 
-200002e0  __TI_cleanup_ptr               
-000021fb  __TI_decompress_lzss           
-000023bd  __TI_decompress_none           
-200002e4  __TI_dtors_ptr                 
-200002e8  __TI_enable_exit_profile_output
+00002ac0  __TI_CINIT_Base                
+00002ad0  __TI_CINIT_Limit               
+00002aa8  __TI_Handler_Table_Base        
+00002ab4  __TI_Handler_Table_Limit       
+00002785  __TI_auto_init                 
+200002e8  __TI_cleanup_ptr               
+00002863  __TI_decompress_lzss           
+00002a45  __TI_decompress_none           
+200002ec  __TI_dtors_ptr                 
+200002f0  __TI_enable_exit_profile_output
 ffffffff  __TI_pprof_out_hndl            
 ffffffff  __TI_prof_data_size            
 ffffffff  __TI_prof_data_start           
 00000000  __TI_static_base__             
-0000218d  __aeabi_d2f                    
-00001f85  __aeabi_dmul                   
-00002359  __aeabi_f2d                    
-00002081  __aeabi_memcpy                 
-00002081  __aeabi_memcpy4                
-00002081  __aeabi_memcpy8                
+00002a53  __TI_zero_init                 
+00002685  __aeabi_cdrcmple               
+000027f5  __aeabi_d2f                    
+000021cf  __aeabi_dadd                   
+000024ed  __aeabi_dmul                   
+000021c5  __aeabi_dsub                   
+000029c1  __aeabi_f2d                    
+0000270b  __aeabi_memclr                 
+0000270b  __aeabi_memclr4                
+0000270b  __aeabi_memclr8                
+000025e9  __aeabi_memcpy                 
+000025e9  __aeabi_memcpy4                
+000025e9  __aeabi_memcpy8                
+0000270d  __aeabi_memset                 
+0000270d  __aeabi_memset4                
+0000270d  __aeabi_memset8                
+000029f9  __aeabi_ui2d                   
 ffffffff  __binit__                      
 ffffffff  __c_args__                     
-00002263  __mpu_init                     
+0000237b  __mpu_init                     
 20000000  __stack                        
-00002391  _args_main                     
-00002265  _c_int00                       
-200002f8  _lock                          
-000023b7  _nop                           
-000023af  _register_lock                 
-000023a9  _register_unlock               
-000023db  _system_post_cinit             
-000023d7  _system_pre_init               
-200002fc  _unlock                        
-000022bd  abort                          
+00002a19  _args_main                     
+000028cd  _c_int00                       
+20000300  _lock                          
+00002a3f  _nop                           
+00002a37  _register_lock                 
+00002a31  _register_unlock               
+000028cb  _system_post_cinit             
+00002a6b  _system_pre_init               
+20000304  _unlock                        
+00002925  abort                          
 ffffffff  binit                          
-0000230d  copy_in                        
-000023e4  d                              
-000019bd  delayMs                        
-00000729  delayUs                        
-20000270  desired_velocity               
+00002975  copy_in                        
+20000220  count                          
+00002a78  d                              
+00001851  delayMs                        
+00000779  delayUs                        
+20000278  desired_velocity               
 20000200  dir                            
 20000210  dis_D                          
 2000020c  dis_I                          
@@ -236,42 +272,50 @@ ffffffff  binit
 20000214  dis_Kp                         
 20000208  dis_P                          
 20000204  dis_PID                        
-20000280  distance                       
-0000057d  echo_state                     
-20000290  encoder_value                  
-20000300  error                          
-000022c5  exit                           
+20000288  distance                       
+20000320  echo_end                       
+20000330  echo_start                     
+000005c1  echo_state                     
+20000298  encoder_value                  
+20000318  errno                          
+20000308  error                          
+0000292d  exit                           
 00000000  g_pfnVectors                   
-00001c91  init_I2C1                      
-00001c27  init_PCA9685                   
-00000c19  init_encoders                  
-0000107b  init_motors                    
-000015b5  init_timer0A                   
-000007c7  init_timer1A                   
-0000082d  init_timer2A                   
-00001d4d  itoa                           
-200002a0  lastEncoded                    
-20000308  last_error                     
-200002b0  last_velocity_error            
-000016cd  main                           
-20000310  main_func_sp                   
-00002081  memcpy                         
-00000f55  motor                          
-00000f0d  motors                         
-0000170b  move                           
-200002ec  position                       
-00001e71  print_line                     
-00000601  read_distance                  
-00001e33  read_line                      
-00001a11  setRWMode                      
-00001b3b  setSlaveAddress                
-00000f3b  set_motor                      
-00001595  sign                           
-200002c0  velocity                       
-200002d0  velocity_error                 
-00001a45  waitAndErrorCheck              
-00001a9b  wireRead                       
-00001a6d  wireSend                       
+00001ed1  init_I2C1                      
+00001e67  init_PCA9685                   
+00000d8d  init_encoders                  
+000011f3  init_motors                    
+00001b35  init_timer0A                   
+00000831  init_timer1A                   
+000008c9  init_timer2A                   
+00001f8d  itoa                           
+200002a8  lastEncoded                    
+20000310  last_error                     
+200002b8  last_velocity_error            
+0000149d  main                           
+2000031c  main_func_sp                   
+000025e9  memcpy                         
+00002713  memset                         
+0000026d  micros                         
+20000224  micros_overflow                
+000010cd  motor                          
+00001085  motors                         
+000015a1  move                           
+200002f4  position                       
+000020b1  print_line                     
+00000649  read_distance                  
+00002073  read_line                      
+00001c51  setRWMode                      
+00001d7b  setSlaveAddress                
+000010b3  set_motor                      
+00001b15  sign                           
+0000237d  sqrt                           
+0000237d  sqrtl                          
+200002c8  velocity                       
+200002d8  velocity_error                 
+00001c85  waitAndErrorCheck              
+00001cdb  wireRead                       
+00001cad  wireSend                       
 
 
 GLOBAL SYMBOLS: SORTED BY Symbol Address 
@@ -281,78 +325,94 @@ address   name
 00000000  __TI_static_base__             
 00000000  g_pfnVectors                   
 00000200  __STACK_SIZE                   
-0000026d  TIMER2_TA_Handler              
-0000057d  echo_state                     
-00000601  read_distance                  
-00000729  delayUs                        
-00000779  Ultrasonic_Init                
-000007c7  init_timer1A                   
-0000082d  init_timer2A                   
-00000945  GPIOPortC_Handler              
-000009f1  GPIOPortE_Handler              
-00000a9d  GPIOPortD_Handler              
-00000b4d  GPIOPortF_Handler              
-00000c19  init_encoders                  
-00000f0d  motors                         
-00000f3b  set_motor                      
-00000f55  motor                          
-0000107b  init_motors                    
-00001325  TIMER0_TA_Handler              
-00001595  sign                           
-000015b5  init_timer0A                   
-000016cd  main                           
-0000170b  move                           
-000019bd  delayMs                        
-000019ff  DisableInterrupts              
-00001a03  EnableInterrupts               
-00001a11  setRWMode                      
-00001a45  waitAndErrorCheck              
-00001a6d  wireSend                       
-00001a9b  wireRead                       
-00001b1b  I2CwriteByte                   
-00001b3b  setSlaveAddress                
-00001b51  PCA9685_digitalWrite           
-00001bd5  PCA9685_analogWrite            
-00001c27  init_PCA9685                   
-00001c91  init_I2C1                      
-00001d31  SerialPrintInt                 
-00001d4d  itoa                           
-00001df1  UART_InChar                    
-00001e05  SerialAvailable                
-00001e17  UART_OutChar                   
-00001e33  read_line                      
-00001e71  print_line                     
-00001e97  UART_Init                      
-00001f85  __aeabi_dmul                   
-00002081  __aeabi_memcpy                 
-00002081  __aeabi_memcpy4                
-00002081  __aeabi_memcpy8                
-00002081  memcpy                         
-0000211d  __TI_auto_init                 
-0000218d  __aeabi_d2f                    
-000021fb  __TI_decompress_lzss           
-00002263  __mpu_init                     
-00002265  _c_int00                       
-000022b9  C$$EXIT                        
-000022bd  abort                          
-000022c5  exit                           
-0000230d  copy_in                        
-00002359  __aeabi_f2d                    
-00002391  _args_main                     
-000023a9  _register_unlock               
-000023af  _register_lock                 
-000023b7  _nop                           
-000023bd  __TI_decompress_none           
-000023cb  ResetISR                       
-000023d7  _system_pre_init               
-000023db  _system_post_cinit             
-000023dc  K                              
-000023e0  N                              
-000023e4  d                              
-00002410  __TI_Handler_Table_Base        
-00002418  __TI_CINIT_Base                
-00002418  __TI_Handler_Table_Limit       
-00002420  __TI_CINIT_Limit               
+0000026d  micros                         
+00000285  TIMER1_TA_Handler              
+000002b1  TIMER2_TA_Handler              
+000005c1  echo_state                     
+00000649  read_distance                  
+00000779  delayUs                        
+000007c1  Ultrasonic_Init                
+00000831  init_timer1A                   
+000008c9  init_timer2A                   
+000009f1  GPIOPortC_Handler              
+00000a9d  GPIOPortE_Handler              
+00000b4d  GPIOPortD_Handler              
+00000cbd  GPIOPortF_Handler              
+00000d8d  init_encoders                  
+00001085  motors                         
+000010b3  set_motor                      
+000010cd  motor                          
+000011f3  init_motors                    
+0000149d  main                           
+000015a1  move                           
+00001851  delayMs                        
+00001893  DisableInterrupts              
+00001897  EnableInterrupts               
+000018a5  TIMER0_TA_Handler              
+00001b15  sign                           
+00001b35  init_timer0A                   
+00001c51  setRWMode                      
+00001c85  waitAndErrorCheck              
+00001cad  wireSend                       
+00001cdb  wireRead                       
+00001d5b  I2CwriteByte                   
+00001d7b  setSlaveAddress                
+00001d91  PCA9685_digitalWrite           
+00001e15  PCA9685_analogWrite            
+00001e67  init_PCA9685                   
+00001ed1  init_I2C1                      
+00001f71  SerialPrintInt                 
+00001f8d  itoa                           
+00002031  UART_InChar                    
+00002045  SerialAvailable                
+00002057  UART_OutChar                   
+00002073  read_line                      
+000020b1  print_line                     
+000020d7  UART_Init                      
+000021c5  __aeabi_dsub                   
+000021cf  __aeabi_dadd                   
+0000237b  __mpu_init                     
+0000237d  sqrt                           
+0000237d  sqrtl                          
+000024ed  __aeabi_dmul                   
+000025e9  __aeabi_memcpy                 
+000025e9  __aeabi_memcpy4                
+000025e9  __aeabi_memcpy8                
+000025e9  memcpy                         
+00002685  __aeabi_cdrcmple               
+0000270b  __aeabi_memclr                 
+0000270b  __aeabi_memclr4                
+0000270b  __aeabi_memclr8                
+0000270d  __aeabi_memset                 
+0000270d  __aeabi_memset4                
+0000270d  __aeabi_memset8                
+00002713  memset                         
+00002785  __TI_auto_init                 
+000027f5  __aeabi_d2f                    
+00002863  __TI_decompress_lzss           
+000028cb  _system_post_cinit             
+000028cd  _c_int00                       
+00002921  C$$EXIT                        
+00002925  abort                          
+0000292d  exit                           
+00002975  copy_in                        
+000029c1  __aeabi_f2d                    
+000029f9  __aeabi_ui2d                   
+00002a19  _args_main                     
+00002a31  _register_unlock               
+00002a37  _register_lock                 
+00002a3f  _nop                           
+00002a45  __TI_decompress_none           
+00002a53  __TI_zero_init                 
+00002a5f  ResetISR                       
+00002a6b  _system_pre_init               
+00002a70  K                              
+00002a74  N                              
+00002a78  d                              
+00002aa8  __TI_Handler_Table_Base        
+00002ab4  __TI_Handler_Table_Limit       
+00002ac0  __TI_CINIT_Base                
+00002ad0  __TI_CINIT_Limit               
 20000000  __stack                        
 20000200  __STACK_END                    
 20000200  __STACK_TOP                    
@@ -364,27 +424,32 @@ address   name
 20000214  dis_Kp                         
 20000218  dis_Ki                         
 2000021c  dis_Kd                         
-20000220  D                              
-20000230  Kd                             
-20000240  Kp                             
-20000250  P                              
-20000260  PID                            
-20000270  desired_velocity               
-20000280  distance                       
-20000290  encoder_value                  
-200002a0  lastEncoded                    
-200002b0  last_velocity_error            
-200002c0  velocity                       
-200002d0  velocity_error                 
-200002e0  __TI_cleanup_ptr               
-200002e4  __TI_dtors_ptr                 
-200002e8  __TI_enable_exit_profile_output
-200002ec  position                       
-200002f8  _lock                          
-200002fc  _unlock                        
-20000300  error                          
-20000308  last_error                     
-20000310  main_func_sp                   
+20000220  count                          
+20000224  micros_overflow                
+20000228  D                              
+20000238  Kd                             
+20000248  Kp                             
+20000258  P                              
+20000268  PID                            
+20000278  desired_velocity               
+20000288  distance                       
+20000298  encoder_value                  
+200002a8  lastEncoded                    
+200002b8  last_velocity_error            
+200002c8  velocity                       
+200002d8  velocity_error                 
+200002e8  __TI_cleanup_ptr               
+200002ec  __TI_dtors_ptr                 
+200002f0  __TI_enable_exit_profile_output
+200002f4  position                       
+20000300  _lock                          
+20000304  _unlock                        
+20000308  error                          
+20000310  last_error                     
+20000318  errno                          
+2000031c  main_func_sp                   
+20000320  echo_end                       
+20000330  echo_start                     
 ffffffff  __TI_pprof_out_hndl            
 ffffffff  __TI_prof_data_size            
 ffffffff  __TI_prof_data_start           
@@ -394,4 +459,4 @@ ffffffff  binit
 UNDEFED   SHT$$INIT_ARRAY$$Base          
 UNDEFED   SHT$$INIT_ARRAY$$Limit         
 
-[115 symbols]
+[136 symbols]

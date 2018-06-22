@@ -1,0 +1,1 @@
+"./MPU9250.obj" "./MadgwickFilter.obj" "./SelfBalancing.obj" "./UartSerial.obj" "./motors.obj" "./tm4c123gh6pm_startup_ccs.obj" "../tm4c123gh6pm.cmd" -llibc.a 

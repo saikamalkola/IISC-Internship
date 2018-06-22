@@ -9,9 +9,15 @@
 #include <stdint.h>
 #include "inc/tm4c123gh6pm.h"
 #include "encoders.h"
+#include "odometry.h"
+#include "Ultrasonic.h"
 
 volatile long encoder_value[4] = { 0, 0, 0, 0 };
 volatile int lastEncoded[4] = { 0, 0, 0, 0 };
+
+extern volatile float distance[4];
+
+volatile unsigned long echo_start[4], echo_end[4];
 
 void GPIOPortC_Handler(void)
 {
@@ -71,29 +77,59 @@ void GPIOPortE_Handler(void)
 
 void GPIOPortD_Handler(void)
 {
-    int MSB = encoder_L_A; //MSB = most significant bit
-    int LSB = encoder_L_B; //LSB = least significant bit
+    volatile int i = 0, int_pin, SR = GPIO_PORTD_MIS_R;
+    for (i = 0; i < 8; i++)  //To determine which pin triggered this interrupt.
+    {
+        if ((SR >> i) & 0x01)
+        {
+            int_pin = i;
+            break;
+        }
+    }
+    if (int_pin >= 4)
+    {
+        int MSB = encoder_L_A; //MSB = most significant bit
+        int LSB = encoder_L_B; //LSB = least significant bit
 
-    int encoded = (MSB << 1) | LSB; //converting the 2 pin value to single number
-    int sum = (lastEncoded[2] << 2) | encoded; //adding it to the previous encoded value
+        int encoded = (MSB << 1) | LSB; //converting the 2 pin value to single number
+        int sum = (lastEncoded[2] << 2) | encoded; //adding it to the previous encoded value
 
-    if (sum == 0b1101 || sum == 0b0100 || sum == 0b0010 || sum == 0b1011)
-        encoder_value[2]++;
-    if (sum == 0b1110 || sum == 0b0111 || sum == 0b0001 || sum == 0b1000)
-        encoder_value[2]--;
+        if (sum == 0b1101 || sum == 0b0100 || sum == 0b0010 || sum == 0b1011)
+            encoder_value[2]++;
+        if (sum == 0b1110 || sum == 0b0111 || sum == 0b0001 || sum == 0b1000)
+            encoder_value[2]--;
 
-    lastEncoded[2] = encoded; //store this value for next time
-
+        lastEncoded[2] = encoded; //store this value for next time
+    }
+    else
+    {
+        switch (echo_state(int_pin))
+        {
+        case 1:
+        {
+//            TIMER1_CTL_R &= ~(TAEN);
+//            TIMER1_TAPR_R = 0x10;
+//            TIMER1_TAILR_R = 0xFFFF;
+//            TIMER1_CTL_R |= TAEN;
+            echo_start[int_pin] = micros();
+        }
+            break;
+        case 0:
+        {
+            echo_end[int_pin] = micros();
+            distance[int_pin] = (echo_end[int_pin] - echo_start[int_pin]) * 0.17;
+            if(distance[int_pin] > 4000)
+            {
+                distance[int_pin] = -1;
+            }
+//            TIMER1_CTL_R &= ~(TAEN);
+        }
+            break;
+        }
+    }
     volatile int readback = 0;
     readback = readback;
-    if (GPIO_PORTD_MIS_R & (1 << 6))
-    {
-        GPIO_PORTD_ICR_R |= (1 << 6);
-    }
-    else if (GPIO_PORTD_MIS_R & (1 << 7))
-    {
-        GPIO_PORTD_ICR_R |= (1 << 7);
-    }
+    GPIO_PORTD_ICR_R |= (1 << int_pin);
     readback = GPIO_PORTD_ICR_R; //a read to force clearing of interrupt flag
 }
 

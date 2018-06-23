@@ -25,7 +25,7 @@ uint8_t calib = 0;
 void delayMs(int n);
 volatile int count = 0;
 
-volatile float Kp = 1000, Kd = 0, P = 0, D = 0, PID = 0, last_error = 0, error =
+volatile float Kp = 700, Kd = 1200, P = 0, D = 0, PID = 0, last_error = 0, error =
         0;
 volatile float set_point = -4;
 
@@ -47,25 +47,25 @@ void TIMER0_TA_Handler()
     int16_t gz = Buf[12] << 8 | Buf[13];
 
     // Read register Status 1 and wait for the DRDY: Data Ready
-    setSlaveAddress(AK8963_ADDRESS);
-
-//    debug = 0;
-////    while (!debug)
-//    {
-//        wireRead(AK8963_ST1, &debug, 1);
-//        debug = debug & 0x01;
-//    }
-
-    // Read magnetometer data
-    uint8_t Mag[7];
-    wireRead(AK8963_XOUT_L, Mag, 7);
-
-    // Create 16 bits values from 8 bits data
-
-    // Magnetometer
-    int16_t mx = -(Mag[3] << 8 | Mag[2]);
-    int16_t my = -(Mag[1] << 8 | Mag[0]);
-    int16_t mz = -(Mag[5] << 8 | Mag[4]);
+//    setSlaveAddress(AK8963_ADDRESS);
+//
+////    debug = 0;
+//////    while (!debug)
+////    {
+////        wireRead(AK8963_ST1, &debug, 1);
+////        debug = debug & 0x01;
+////    }
+//
+//    // Read magnetometer data
+//    uint8_t Mag[7];
+//    wireRead(AK8963_XOUT_L, Mag, 7);
+//
+//    // Create 16 bits values from 8 bits data
+//
+//    // Magnetometer
+//    int16_t mx = -(Mag[3] << 8 | Mag[2]);
+//    int16_t my = -(Mag[1] << 8 | Mag[0]);
+//    int16_t mz = -(Mag[5] << 8 | Mag[4]);
 
     switch (calib)
     {
@@ -166,7 +166,7 @@ void TIMER0_TA_Handler()
             PID = -12000;
         }
     }
-    if (abs(error) < 30 || error < 2)
+    if (abs(error) < 30)
     {
         motor(0, -PID);
         motor(1, -PID);

@@ -28,7 +28,7 @@ int main(void)
     UART_Init();
     init_MPU9250();
     init_motors();
-    init_timer0A(4);
+    init_timer0A(2);
     init_timer1A();
     TIMER0_CTL_R |= TAEN;    //Enabling Timer A
     EnableInterrupts();

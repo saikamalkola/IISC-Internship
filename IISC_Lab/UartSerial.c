@@ -109,6 +109,12 @@ void print_line(char *data)
     }
 }
 
+void printString(char *msg)
+{
+    while( *msg)
+        UART_OutChar(*msg++);
+}
+
 void UART_Init(void)
 {
     SYSCTL_RCGCUART_R |= 0x01;            //activate UART0

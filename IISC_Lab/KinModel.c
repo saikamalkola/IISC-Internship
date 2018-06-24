@@ -32,7 +32,7 @@ void set_velocity(void)
         for (j = 0; j < 3; j++)
             sum += (J[i][j] * V[j]);
         w[i] = sum;
-        w[i] = w[i] * 60 / (2 * M_PI); //rps to RpM
+        w[i] = w[i] * 60 * 50 / (2 * M_PI); //rps to RpM
     }
     motors(w);
 }

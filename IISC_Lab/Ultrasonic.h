@@ -24,3 +24,5 @@ uint8_t echo_state(uint8_t index);
 void Ultrasonic_Init(void);
 void init_timer1A(void);
 void init_timer2A(int time_ms);
+unsigned long micros();
+unsigned long millis();

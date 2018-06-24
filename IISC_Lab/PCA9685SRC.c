@@ -157,7 +157,7 @@ void main()
 {
     init_I2C0();
     init_PCA9685();
-    PCA9685_analogWrite(0,2048,4095);
+    PCA9685_analogWrite(15,2048,4095);
     while (1)
     {
     }

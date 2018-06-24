@@ -33,7 +33,8 @@ void ResetISR(void);
 static void NmiSR(void);
 static void FaultISR(void);
 static void IntDefaultHandler(void);
-//void TIMER0_TA_Handler(void);
+
+void TIMER0_TA_Handler(void);
 void GPIOPortC_Handler(void);
 void GPIOPortE_Handler(void);
 void GPIOPortD_Handler(void);

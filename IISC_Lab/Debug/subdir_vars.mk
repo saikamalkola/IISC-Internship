@@ -11,6 +11,7 @@ C_SRCS += \
 ../PCA9685.c \
 ../UartSerial.c \
 ../Ultrasonic.c \
+../WiFi_Comm.c \
 ../encoders.c \
 ../motors.c \
 ../odometry.c \
@@ -22,6 +23,7 @@ C_DEPS += \
 ./PCA9685.d \
 ./UartSerial.d \
 ./Ultrasonic.d \
+./WiFi_Comm.d \
 ./encoders.d \
 ./motors.d \
 ./odometry.d \
@@ -33,6 +35,7 @@ OBJS += \
 ./PCA9685.obj \
 ./UartSerial.obj \
 ./Ultrasonic.obj \
+./WiFi_Comm.obj \
 ./encoders.obj \
 ./motors.obj \
 ./odometry.obj \
@@ -44,6 +47,7 @@ OBJS__QUOTED += \
 "PCA9685.obj" \
 "UartSerial.obj" \
 "Ultrasonic.obj" \
+"WiFi_Comm.obj" \
 "encoders.obj" \
 "motors.obj" \
 "odometry.obj" \
@@ -55,6 +59,7 @@ C_DEPS__QUOTED += \
 "PCA9685.d" \
 "UartSerial.d" \
 "Ultrasonic.d" \
+"WiFi_Comm.d" \
 "encoders.d" \
 "motors.d" \
 "odometry.d" \
@@ -66,6 +71,7 @@ C_SRCS__QUOTED += \
 "../PCA9685.c" \
 "../UartSerial.c" \
 "../Ultrasonic.c" \
+"../WiFi_Comm.c" \
 "../encoders.c" \
 "../motors.c" \
 "../odometry.c" \

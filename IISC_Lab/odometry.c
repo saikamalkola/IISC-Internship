@@ -12,6 +12,7 @@
 #include <math.h>
 #include "motors.h"
 #include "PCA9685.h"
+#include "KinModel.h"
 
 extern volatile long encoder_value[4];
 const float K = 0.261799;    //(PI*D/N)
@@ -21,7 +22,7 @@ volatile int velocity[4] = { 0, 0, 0, 0 };    //Actual RPM of motors
 volatile int desired_velocity[4] = { 0, 0, 0, 0 };
 volatile int PID[4] = { 0, 0, 0, 0 }, P[4] = { 0, 0, 0, 0 };
 volatile int D[4] = { 0, 0, 0, 0 };
-volatile int Kp[4] = { 80, 80, 80, 80 }, Kd[4] = { 10, 10, 10, 10 };
+volatile int Kp[4] = { 80, 110, 80, 80 }, Kd[4] = { 10, 10, 10, 10 };
 volatile int velocity_error[4] = { 0, 0, 0, 0 }, last_velocity_error[4] = { 0, 0, 0, 0 };
 
 struct Position
@@ -48,11 +49,11 @@ void TIMER0_TA_Handler(void)
     theta_FB = (d_F + d_B) / d;
     theta_LR = (d_L + d_R) / d;
     d_theta = (theta_FB + theta_LR) * 0.5;
-    d_theta = d_theta * 0.5;
+    d_theta = -d_theta * 0.5;
 
     position.x += d_FB;//(d_FB * cosf(position.theta + d_theta)) + (d_LR * cosf(position.theta + M_PI_2 + d_theta));
     position.y += d_LR;//(d_FB * sinf(position.theta + d_theta)) + (d_LR * sinf(position.theta + M_PI_2 + d_theta));
-    position.theta += ((theta_FB + theta_LR) / 2);
+    position.theta += (d_theta * 2);// * (180 / M_PI));
 //    position.x += (d_FB * cosf(position.theta + d_theta))
 //            + (d_LR * cosf(position.theta + M_PI_2 + d_theta));
 //    position.y += (d_FB * sinf(position.theta + d_theta))
@@ -71,7 +72,7 @@ void TIMER0_TA_Handler(void)
         {
             PID[i] = sign(PID[i]) * 10000;
         }
-        motor(i, -PID[i]);
+       //motor(i, -PID[i]);
         encoder_value[i] = 0;
     }
     volatile int read_back = 0;

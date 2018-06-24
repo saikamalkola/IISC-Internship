@@ -13,11 +13,9 @@
 #include "odometry.h"
 #include "motors.h"
 #include "KinModel.h"
+#include "WiFi_Comm.h"
 
-volatile int dir = 1;
-volatile float error[2] = { 0, 0 }, last_error[2] = { 0, 0 };
-volatile float dis_PID = 0, dis_P = 0, dis_I = 0, dis_D = 0;
-volatile float dis_Kp = 0.15, dis_Ki = 0, dis_Kd = 0;
+void delayMs(int n);
 
 extern volatile float distance[4];
 volatile int count = 0;
@@ -27,6 +25,12 @@ unsigned long micros_overflow = 0;
 unsigned long micros()
 {
     return ((micros_overflow << 16) + TIME_US);
+}
+
+unsigned long millis()
+{
+    float mil = (((float)micros_overflow * 65.536) + (TIME_US / 1000));
+    return (unsigned long)mil;
 }
 
 void TIMER1_TA_Handler(void)
@@ -39,86 +43,23 @@ void TIMER1_TA_Handler(void)
 
 void TIMER2_TA_Handler(void)
 {
+
     if(count > 4)
     {
+        update_UI();
         count = 0;
     }
-
     if(count != 4)
     {
         PCA9685_digitalWrite(count + 4, 0); //Low
-        delayUs(10);
+        delayMs(1);
         PCA9685_digitalWrite(count + 4, 1); //High
-        delayUs(10);
+        delayMs(1);
         PCA9685_digitalWrite(count + 4, 0); //Low
     }
     else
     {
         //Do PID all distances are ready
-        error[0] = distance[0] - distance[1];
-        error[1] = distance[2] - distance[3];
-        if((distance[0] + distance[1]) > 2500)
-        {
-            if(distance[0] > 1250 && distance[1] > 1250)
-            {
-                error[0] = 0;
-            }
-            if(distance[0] > distance[1])
-            {
-                error[0] =  890 - distance[1];
-            }
-            else
-            {
-                error[0] =  distance[0] - 890;
-            }
-        }
-        if((distance[2] + distance[3]) > 2500)
-        {
-            if(distance[2] > 1250 && distance[3] > 1250)
-            {
-                error[1] = 0;
-            }
-            if(distance[2] > distance[3])
-            {
-                error[1] =  890 - distance[3];
-            }
-            else
-            {
-                error[1] =  distance[2] - 890;
-            }
-        }
-        switch (abs(dir))
-        {
-        case 1:
-        {
-            dis_P = dis_Kp * error[1];
-            dis_D = dis_Kd * (error[1] - last_error[1]);
-            dis_PID = dis_P + dis_D;
-            last_error[1] = error[1];
-            if (abs(dis_PID) >  10000)
-            {
-                dis_PID = sign(dis_PID) * 10000;
-            }
-//            set_motor(0, dis_PID);
-//            set_motor(1, -dis_PID);
-        }
-            break;
-        case 2:
-        {
-            dis_P = dis_Kp * error[0];
-            dis_D = dis_Kd * (error[0] - last_error[0]);
-            dis_PID = dis_P + dis_D;
-            last_error[0] = error[0];
-            if (abs(dis_PID) > 10000)
-            {
-                dis_PID = sign(dis_PID) * 10000;
-            }
-//            set_motor(2, -dis_PID);
-//            set_motor(3, dis_PID);
-        }
-            break;
-
-    }
     }
     count++;
     volatile int read_back = 0;

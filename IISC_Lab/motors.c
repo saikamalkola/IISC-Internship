@@ -12,12 +12,12 @@
 
 extern volatile int desired_velocity[4];
 
-void motors(int *value)
+void motors(float *value)
 {
-    set_motor(0, value[2]);
-    set_motor(1, value[0]);
-    set_motor(2, value[3]);
-    set_motor(3, value[1]);
+    motor(0, value[1]);
+    motor(1, value[3]);
+    motor(2, value[0]);
+    motor(3, value[2]);
 }
 
 void set_motor(uint8_t index, int set_point)

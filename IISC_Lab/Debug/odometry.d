@@ -10,6 +10,7 @@ odometry.obj: /home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/
 odometry.obj: /home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/_defs.h
 odometry.obj: ../motors.h
 odometry.obj: ../PCA9685.h
+odometry.obj: ../KinModel.h
 
 ../odometry.c: 
 /home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/stdbool.h: 
@@ -21,3 +22,4 @@ odometry.obj: ../PCA9685.h
 /home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/_defs.h: 
 ../motors.h: 
 ../PCA9685.h: 
+../KinModel.h: 

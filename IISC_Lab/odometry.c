@@ -34,7 +34,8 @@ struct Position
 
 extern struct location
 {
-    float distance; //Distance between initial point and origin
+    float distance_x; //Distance between initial point and origin
+    float distance_y;
     uint8_t side;   //Left - 0 Right - 1
 } present;
 
@@ -49,7 +50,7 @@ void TIMER0_TA_Handler(void)
     d_L = K * encoder_value[2];
     d_R = K * encoder_value[3];
 
-    d_FB = (d_F - d_B) * 0.5;
+    d_FB = (d_B - d_F) * 0.5;
     d_LR = (d_R - d_L) * 0.5;
 
     theta_FB = (d_F + d_B) / d;
@@ -66,7 +67,9 @@ void TIMER0_TA_Handler(void)
 //            + (d_LR * sinf(position.theta + M_PI_2 + d_theta));
 //    position.theta += ((theta_FB + theta_LR) / 2);
 
-    present.distance = position.y;
+    present.distance_x = position.x;
+    present.distance_y = position.y;
+
     for (i = 0; i < 4; i++)
     {
         velocity[i] = encoder_value[i]; //In RPM Conversion factor = (60*1000)/(1200*50) = 1

@@ -14,6 +14,7 @@
 #include "motors.h"
 #include "KinModel.h"
 #include "WiFi_Comm.h"
+#include <math.h>
 
 void delayMs(int n);
 

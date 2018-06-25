@@ -10,6 +10,9 @@ Ultrasonic.obj: ../odometry.h
 Ultrasonic.obj: ../motors.h
 Ultrasonic.obj: ../KinModel.h
 Ultrasonic.obj: ../WiFi_Comm.h
+Ultrasonic.obj: /home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/math.h
+Ultrasonic.obj: /home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/linkage.h
+Ultrasonic.obj: /home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/_defs.h
 
 ../Ultrasonic.c: 
 /home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/stdbool.h: 
@@ -21,3 +24,6 @@ Ultrasonic.obj: ../WiFi_Comm.h
 ../motors.h: 
 ../KinModel.h: 
 ../WiFi_Comm.h: 
+/home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/math.h: 
+/home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/linkage.h: 
+/home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/_defs.h: 

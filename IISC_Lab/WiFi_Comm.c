@@ -76,12 +76,12 @@ void UIPrintInt(int integer)
 
 void update_UI()
 {
-//    UIPrintInt(position.x);
-//    UI_OutChar('\t');
-//    UIPrintInt(position.y);
-//    UI_OutChar('\t');
-//    UIPrintInt(position.theta * 180 / 3.14);
-//    UI_OutChar('\n');
+    UIPrintInt(position.x);
+    UI_OutChar('\t');
+    UIPrintInt(position.y);
+    UI_OutChar('\t');
+    UIPrintInt(position.theta * 180 / 3.14);
+    UI_OutChar('\n');
 }
 
 void UI_OutChar(char data)

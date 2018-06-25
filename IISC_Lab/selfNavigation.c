@@ -19,6 +19,7 @@
 #include "WiFi_Comm.h"
 
 #define CORRECTION_TIME 5000L
+
 //#include "FreeRTOS.h"
 //#include "task.h"
 //#include "queue.h"
@@ -36,6 +37,7 @@ extern volatile int lastEncoded[4];
 extern volatile int velocity[4];
 extern volatile int velocity_error[4], PID[4];
 
+void set_dest_corridor(void);
 void move(float distance, int dir);
 float absolute(float val);
 void correct_orientation();
@@ -51,6 +53,9 @@ volatile int dir = 1;
 volatile float dis_PID = 0, dis_P = 0, dis_I = 0, dis_D = 0;
 volatile float dis_Kp = 0.003, dis_Ki = 0, dis_Kd = 0;
 
+float limit_L = 0, limit_H = 0;
+uint8_t change_corridor = 0;
+
 extern struct Position
 {
     volatile float x;
@@ -60,17 +65,26 @@ extern struct Position
 
 struct location
 {
-    float distance; //Distance between initial point and origin
+    float distance_x; //Distance between initial point and origin
+    float distance_y;
     uint8_t side;   //Left - 0 Right - 1
 };
 
-struct location room[5] = { { 8000, 0 }, { 16000, 1 }, { 24000, 2 },
-                            { 30000, 3 }, { 40000, 4 } };
+struct location room[7] = { { 0, 0, 0 }, { 0, 8000, 0 }, { 0, 16000, 1 }, {
+        0, 24000, 1 },
+                            { 0, 32000, 0 }, { 0, 40000, 1 }, { 10000, 0, 0 } };
 
-struct location present = { 0, 0 }; //Initial Postion = 0 (Embedded Systems Lab)
-struct location destination = { 40000, 0 };
+struct location present = { 0, 0, 0 }; //Initial Postion = 0 (Embedded Systems Lab)
+struct location destination = { 0, 0, 0 };
 
 int present_room = -1, dest_room = -1;  //Index of Lab
+uint8_t present_corridor = 0, dest_corridor = 0;
+/*
+ *  00 - Origin
+ *  01 - On X - axis
+ *  10 - On Y - axis
+ *  11 - not on X and Y axes
+ */
 
 int main()
 {
@@ -86,19 +100,13 @@ int main()
     init_timer1A();
     init_timer2A(50);
     EnableInterrupts();
-    delayMs(2000);
     PCA9685_digitalWrite(GREEN_LED, 1);
     delayMs(500);
     PCA9685_digitalWrite(GREEN_LED, 0);
     delayMs(500);
-
-    while(1)
-    {
-
-    }
     while (1)
     {
-        if (present_room != dest_room)
+        while (present_room != dest_room)
         {
             det_dis_dir();
             move(dis, dir);
@@ -122,15 +130,34 @@ int main()
                 PCA9685_digitalWrite(BUZZER, 0);
                 delayMs(250);
             }
-            present_room = dest_room;
+            if (change_corridor == 0)
+            {
+                present_room = dest_room;
+            }
+            present_corridor = dest_corridor;
         }
-        //WaitForMsg();   //Wait for person to press button in UI
+        WaitForMsg();   //Wait for person to press button in UI
     }
 }
 
 int correction_range_check()
 {
-    if ((present.distance > 10000.0) && (present.distance < 35000.0))
+    float check_distance = 0;
+
+    if (abs(dir) == 1)
+    {
+        limit_L = 10000;
+        limit_H = 35000;
+        check_distance = present.distance_y;
+    }
+    else if (abs(dir) == 2)
+    {
+        limit_L = 6000;
+        limit_H = 12000;
+        check_distance = present.distance_x;
+    }
+
+    if ((abs(check_distance) > limit_L) && (abs(check_distance) < limit_H))
     {
         return 1;
     }
@@ -147,34 +174,109 @@ void WaitForMsg()
     {
         //Read Line and Parse data
         UI_read_line(response);
-        print_line(response);
-        UART_OutChar('\t');
         dest_room = response[0] - '0';
-        UART_OutChar(response[0]);
-        UART_OutChar('\n');
-        destination.distance = room[dest_room].distance;
+        destination.distance_x = room[dest_room].distance_x;
+        destination.distance_y = room[dest_room].distance_y;
         destination.side = room[dest_room].side;
+        set_dest_corridor();
+    }
+}
+
+void set_dest_corridor()
+{
+    if (destination.distance_x != 0)
+    {
+        dest_corridor |= 0x01;
+    }
+    else
+    {
+        dest_corridor &= ~(0x01);
+    }
+
+    if (destination.distance_y != 0)
+    {
+        dest_corridor |= 0x02;
+    }
+    else
+    {
+        dest_corridor &= ~(0x02);
     }
 }
 
 void det_dis_dir()
 {
-    if ((destination.distance - present.distance) > 0.0)
+    if (destination.distance_x == 0)
     {
-        dir = 1;
-        dis = destination.distance - present.distance;
+        if ((present_corridor & 0x02) || (present_corridor == 0))
+        {
+            change_corridor = 0;
+            //Bot is there on Y-Axis or origin
+            if ((destination.distance_y - present.distance_y) > 0.0)
+            {
+                dir = 1;
+                dis = destination.distance_y - present.distance_y;
+            }
+            else
+            {
+                dir = -1;
+                dis = present.distance_y - destination.distance_y;
+            }
+        }
+        else if ((present_corridor & 0x01))
+        {
+            change_corridor = 1;
+            //Bot is there on X-axis but need to go to room on Y-axis
+            if (present.distance_x > 0)
+            {
+                dir = -2;
+                dis = present.distance_x;
+            }
+            else
+            {
+                dir = 2;
+                dis = -present.distance_x;
+            }
+        }
     }
-    else
+    else if (destination.distance_y == 0)
     {
-        dir = -1;
-        dis = present.distance - destination.distance;
+        if ((present_corridor & 0x01) || (present_corridor == 0))
+        {
+            change_corridor = 0;
+            //Bot is there on X-Axis or origin
+            if ((destination.distance_x - present.distance_x) > 0.0)
+            {
+                dir = 2;
+                dis = destination.distance_x - present.distance_x;
+            }
+            else
+            {
+                dir = -2;
+                dis = present.distance_x - destination.distance_x;
+            }
+        }
+        else if ((present_corridor & 0x02))
+        {
+            change_corridor = 1;
+            //Bot is there on X-axis but need to go to room on Y-axis
+            if (present.distance_y > 0)
+            {
+                dir = -1;
+                dis = present.distance_y;
+            }
+            else
+            {
+                dir = 1;
+                dis = -1 * present.distance_y;
+            }
+        }
     }
 }
 
 void correct_orientation()
 {
     float error[3] = { 0, 0, 0 };
-    unsigned long prev_ms = millis();
+    unsigned long prev_ms = millis(), Kp = 0.7;
 
     while ((millis() - prev_ms) < 500)
     {
@@ -183,7 +285,7 @@ void correct_orientation()
         motor(2, 0);
         motor(3, 0);
     }
-
+//
 //    prev_ms = millis();
 //    while ((millis() - prev_ms) < 2000)
 //    {
@@ -191,16 +293,22 @@ void correct_orientation()
 //        V[0] = 0;
 //        V[1] = 0;
 //        V[2] = Kp * error[2];
-//        SerialPrintInt(V[2]);
-//        UART_OutChar('\n');
 //        set_velocity();
 //        delayMs(10);
 //    }
-//
+
     prev_ms = millis();
     while ((millis() - prev_ms) < 2000)
     {
         int i = 0;
+        for (i = 0; i < 4; i++)
+        {
+            if (distance[i] == -1)
+            {
+                distance[i] = 890;
+            }
+        }
+
         error[1] = distance[0] - distance[1];
         error[2] = distance[2] - distance[3];
         if ((distance[0] + distance[1]) > 2000)
@@ -231,13 +339,6 @@ void correct_orientation()
             else
             {
                 error[2] = distance[2] - 890;
-            }
-        }
-        for (i = 0; i < 4; i++)
-        {
-            if (distance[i] == -1)
-            {
-                distance[i] = 890;
             }
         }
         switch (abs(dir))
@@ -413,7 +514,7 @@ void move(float distance, int dir)
     {
         for (i = 0; i <= 100; i++)
         {
-            V[0] = -1 * (float) i / 100;
+            V[0] = 1 * (float) i / 100;
             ;
             V[1] = 0;
             V[2] = 0;
@@ -427,19 +528,28 @@ void move(float distance, int dir)
         {
             if ((millis() - prev_ms) > CORRECTION_TIME)
             {
-                correct_orientation();
+                if (correction_range_check())
+                {
+                    correct_orientation();
+                }
+                else
+                {
+                    PCA9685_digitalWrite(BUZZER, 1);
+                    delayMs(100);
+                    PCA9685_digitalWrite(BUZZER, 0);
+                    delayMs(100);
+                }
                 prev_ms = millis();
             }
             current = position.x;
-            V[0] = -1;
+            V[0] = 1;
             V[1] = 0;
             V[2] = 0;
             set_velocity();
         }
         for (i = 100; i >= 0; i--)
         {
-            V[0] = -1 * (float) i / 100;
-            ;
+            V[0] = 1 * (float) i / 100;
             V[1] = 0;
             V[2] = 0;
             set_velocity();
@@ -451,8 +561,7 @@ void move(float distance, int dir)
     {
         for (i = 0; i <= 100; i++)
         {
-            V[0] = 1 * (float) i / 100;
-            ;
+            V[0] = -1 * (float) i / 100;
             V[1] = 0;
             V[2] = 0;
             set_velocity();
@@ -469,14 +578,14 @@ void move(float distance, int dir)
                 prev_ms = millis();
             }
             current = position.x;
-            V[0] = 1;
+            V[0] = -1;
             V[1] = 0;
             V[2] = 0;
             set_velocity();
         }
         for (i = 100; i >= 0; i--)
         {
-            V[0] = 1 * (float) i / 100;
+            V[0] = -1 * (float) i / 100;
             V[1] = 0;
             V[2] = 0;
             set_velocity();

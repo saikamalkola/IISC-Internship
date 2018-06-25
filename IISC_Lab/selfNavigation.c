@@ -18,6 +18,9 @@
 #include "KinModel.h"
 #include "WiFi_Comm.h"
 
+#define X_MAX   20000
+#define Y_MAX   50000
+
 #define CORRECTION_TIME 5000L
 
 //#include "FreeRTOS.h"
@@ -26,7 +29,6 @@
 //#include "semphr.h"
 
 //Function definitions
-void det_dis_dir();
 void WaitForMsg();
 void delayMs(int n);
 void DisableInterrupts(void);
@@ -37,7 +39,11 @@ extern volatile int lastEncoded[4];
 extern volatile int velocity[4];
 extern volatile int velocity_error[4], PID[4];
 
-void set_dest_corridor(void);
+uint8_t det_corridor(int room_number);
+void make_decision_array();
+uint8_t det_common_corner(uint8_t present_corridor, uint8_t dest_corridor);
+void det_common_corners(uint8_t *comm_corner, uint8_t present_corridor,
+                        uint8_t dest_corridor);
 void move(float distance, int dir);
 float absolute(float val);
 void correct_orientation();
@@ -70,21 +76,60 @@ struct location
     uint8_t side;   //Left - 0 Right - 1
 };
 
-struct location room[7] = { { 0, 0, 0 }, { 0, 8000, 0 }, { 0, 16000, 1 }, {
-        0, 24000, 1 },
-                            { 0, 32000, 0 }, { 0, 40000, 1 }, { 10000, 0, 0 } };
+struct location common_corner[4] = { { 0, 0, 0 }, { X_MAX, 0, 0 }, { X_MAX,
+                                                                     Y_MAX, 0 },
+                                     { 0, Y_MAX, 0 } };
+struct location room[21] = {
+                            { 0, 0, 0 },
+                            { 0, 8000, 0 },
+                            { 0, 16000, 1 },
+                            { 0, 24000, 1 },
+                            { 0, 32000, 0 },
+                            { 0, 40000, 1 },
+                            { 0, Y_MAX, 0 },
+                            { 5000, 0, 0},
+                            { 10000, 0, 0},
+                            { 15000, 0, 0},
+                            { X_MAX, 0, 0},
+                            { X_MAX, 8000, 0},
+                            { X_MAX, 16000, 0},
+                            { X_MAX, 24000, 0},
+                            { X_MAX, 32000, 0},
+                            { X_MAX, 40000, 0},
+                            { X_MAX, Y_MAX, 0},
+                            { 0, Y_MAX, 0},
+                            { 5000, Y_MAX, 0},
+                            { 10000, Y_MAX, 0},
+                            { 15000, Y_MAX, 0},
+                            };
 
 struct location present = { 0, 0, 0 }; //Initial Postion = 0 (Embedded Systems Lab)
 struct location destination = { 0, 0, 0 };
 
-int present_room = -1, dest_room = -1;  //Index of Lab
-uint8_t present_corridor = 0, dest_corridor = 0;
+int present_room = 0, dest_room = 0;  //Index of Lab
+
 /*
- *  00 - Origin
- *  01 - On X - axis
- *  10 - On Y - axis
- *  11 - not on X and Y axes
+ * (50,0)      (50,20)
+ *  _______________
+ *  |      3      |            Y^
+ *  |             |             |
+ *  |             |             |
+ *  |             |             |
+ *  |0           2|             |
+ *  |             |             ---------->X
+ *  |             |
+ *  |_____________|
+ *  (0,0)  1   (20, 0)
+ *
  */
+
+struct decision
+{
+    float distance;
+    int dir;
+} decisions[3];
+
+uint8_t decision_count = 0;
 
 int main()
 {
@@ -94,6 +139,7 @@ int main()
     init_motors();  //Initializing Motor Pins
     UART_Init();    //Initialising UART
     UART1_Init();
+    init_BMS();
     init_I2C1();
     init_PCA9685();
     init_timer0A(25);
@@ -108,36 +154,37 @@ int main()
     {
         while (present_room != dest_room)
         {
-            det_dis_dir();
-            move(dis, dir);
-            if (destination.side == 0)
+            int i = 0;
+            //Execute the instructions
+            for (i = 0; i <= decision_count; i++)
+            {
+                dir = decisions[i].dir;
+                move(decisions[i].distance, decisions[i].dir);
+            }
+
+            present_room = dest_room;
+            if (room[dest_room].side == 0)
             {
                 //left side Beep once
-                PCA9685_digitalWrite(BUZZER, 1);
-                delayMs(500);
-                PCA9685_digitalWrite(BUZZER, 0);
-                delayMs(500);
+                buzz(500);
             }
             else
             {
                 //left side Beep once
-                PCA9685_digitalWrite(BUZZER, 1);
-                delayMs(250);
-                PCA9685_digitalWrite(BUZZER, 0);
-                delayMs(250);
-                PCA9685_digitalWrite(BUZZER, 1);
-                delayMs(250);
-                PCA9685_digitalWrite(BUZZER, 0);
-                delayMs(250);
+                buzz(250);
+                buzz(250);
             }
-            if (change_corridor == 0)
-            {
-                present_room = dest_room;
-            }
-            present_corridor = dest_corridor;
         }
         WaitForMsg();   //Wait for person to press button in UI
     }
+}
+
+void buzz(int ms)
+{
+    PCA9685_digitalWrite(BUZZER, 1);
+    delayMs(ms);
+    PCA9685_digitalWrite(BUZZER, 0);
+    delayMs(ms);
 }
 
 int correction_range_check()
@@ -167,116 +214,354 @@ int correction_range_check()
     }
 }
 
+uint8_t det_common_corner(uint8_t present_corridor, uint8_t dest_corridor)
+{
+    uint8_t common;
+
+    uint8_t sum = present_corridor + dest_corridor;
+    switch (sum)
+    {
+    case 1:
+    {
+        common = 0;
+    }
+        break;
+    case 3:
+    {
+        common = 1;
+    }
+        break;
+    case 5:
+    {
+        common = 2;
+    }
+    break;
+    case 7:
+    {
+        common = 3;
+    }
+        break;
+    }
+    return common;
+}
+
+void det_common_corners(uint8_t *comm_corner, uint8_t present_corridor,
+                        uint8_t dest_corridor)
+{
+    float d1 = 0, d2 = 0;
+    if ((present_corridor % 2) == 0)
+    {
+        d1 = X_MAX + room[present_room].distance_y + room[dest_room].distance_y;
+        d2 = X_MAX + (Y_MAX - room[present_room].distance_y)
+                + (Y_MAX - room[dest_room].distance_y);
+
+        if (d1 > d2)
+        {
+            if (present_corridor > dest_corridor)
+            {
+                comm_corner[0] = 2;
+                comm_corner[1] = 3;
+            }
+            else
+            {
+                comm_corner[0] = 3;
+                comm_corner[1] = 2;
+            }
+        }
+        else
+        {
+            if (present_corridor > dest_corridor)
+            {
+                comm_corner[0] = 1;
+                comm_corner[1] = 0;
+            }
+            else
+            {
+                comm_corner[0] = 0;
+                comm_corner[1] = 1;
+            }
+        }
+    }
+    else if ((present_corridor % 2) == 1)
+    {
+        d1 = Y_MAX + room[present_room].distance_x + room[dest_room].distance_x;
+        d2 = Y_MAX + (X_MAX - room[present_room].distance_x)
+                + (X_MAX - room[dest_room].distance_x);
+
+        if (d1 > d2)
+        {
+            if (present_corridor > dest_corridor)
+            {
+                comm_corner[0] = 2;
+                comm_corner[1] = 1;
+            }
+            else
+            {
+                comm_corner[0] = 1;
+                comm_corner[1] = 2;
+            }
+        }
+        else
+        {
+            if (present_corridor > dest_corridor)
+            {
+                comm_corner[0] = 3;
+                comm_corner[1] = 0;
+            }
+            else
+            {
+                comm_corner[0] = 0;
+                comm_corner[1] = 3;
+            }
+        }
+    }
+}
+
+void make_decision_array()
+{
+    uint8_t present_corridor = 0, dest_corridor = 0;
+    //determine in which corridor bot is present
+    present_corridor = det_corridor(present_room);
+    //determine in which corridor destination co-ordinate is there
+    dest_corridor = det_corridor(dest_room);
+
+    if((present_corridor == 0 && dest_corridor == 3))
+    {
+        present_corridor = 4;
+    }
+
+    if((present_corridor == 3 && dest_corridor == 0))
+    {
+        dest_corridor = 4;
+    }
+
+    decision_count = 0;
+    if (dest_corridor == present_corridor)
+    {
+        /*
+         * Simple cases - Robot is in same corridor as destination corridor
+         *
+         * Cases:       P  D
+         *              0  0
+         *              1  1
+         *              2  2
+         *              3  3
+         */
+        if (room[present_room].distance_x == room[dest_room].distance_x)
+        {
+            decisions[decision_count].distance = abs(
+                    room[dest_room].distance_y - room[present_room].distance_y);
+            decisions[decision_count].dir = sign(
+                    room[dest_room].distance_y - room[present_room].distance_y);
+        }
+        if (room[present_room].distance_y == room[dest_room].distance_y)
+        {
+            decisions[decision_count].distance = abs(
+                    room[dest_room].distance_x - room[present_room].distance_x);
+            decisions[decision_count].dir = 2 * sign(
+                    room[dest_room].distance_x - room[present_room].distance_x);
+        }
+    }
+    else if (abs(dest_corridor - present_corridor) == 1)
+    {
+        /*
+         * Little Complex cases - When robot is in corridor adjacent to the destination corridor
+         *
+         * First go to corner which is common to both the corridors and go to destination corridor from there
+         *
+         *  Cases       P  D
+         *              0  1
+         *              1  0
+         *  Common:    (0,0)
+         *
+         *              1  2
+         *              2  1
+         *  Common:    (X_MAX,0)
+         *
+         *              2  3
+         *              3  2
+         *  Common:    (X_MAX,Y_MAX)
+         *
+         *              3  0
+         *              0  3
+         *  Common:    (0,Y_MAX)
+         */
+        //First decision go to the common corner
+        uint8_t common = det_common_corner(present_corridor, dest_corridor);
+        if (present_corridor % 2 == 0)
+        {
+            // Bot is on X = 0 or X = 20
+            decisions[decision_count].distance = abs(
+                    common_corner[common].distance_y
+                            - room[present_room].distance_y);
+            decisions[decision_count].dir = sign(
+                    common_corner[common].distance_y
+                            - room[present_room].distance_y);
+
+            decision_count++;
+
+            //Now bot will be in common corner
+            decisions[decision_count].distance = abs(
+                    room[dest_room].distance_x
+                            - common_corner[common].distance_x);
+            decisions[decision_count].dir = 2 * sign(
+                    room[dest_room].distance_x
+                            - common_corner[common].distance_x);
+        }
+        else if (present_corridor % 2 == 1)
+        {
+            //Bot is on Y = 0 or Y = 50
+            decisions[decision_count].distance = abs(
+                    common_corner[common].distance_x
+                            - room[present_room].distance_x);
+            decisions[decision_count].dir = 2 * sign(
+                    common_corner[common].distance_x
+                            - room[present_room].distance_x);
+
+            decision_count++;
+
+            //Now bot will be in common corner
+            decisions[decision_count].distance = abs(
+                    room[dest_room].distance_y
+                            - common_corner[common].distance_y);
+            decisions[decision_count].dir = sign(
+                    room[dest_room].distance_y
+                            - common_corner[common].distance_y);
+        }
+    }
+
+    else if (abs(dest_corridor - present_corridor) == 2)
+    {
+        /*
+         *  Complex cases - When robot is in corridor parallel to the destination corridor
+         *
+         *  Calculate shortest path and make decision array accordingly
+         *
+         *  Cases       P   D
+         *              0   2
+         *              2   0
+         *
+         *              1   3
+         *              3   1
+         */
+
+        uint8_t comm_corner[2];
+        //Determine common corner based on shortest path
+        det_common_corners(comm_corner, present_corridor, dest_corridor);
+        if (present_corridor % 2 == 0)
+        {
+            // Bot is on X = 0 or X = 20
+            decisions[decision_count].distance = abs(
+                    common_corner[comm_corner[0]].distance_y
+                            - room[present_room].distance_y);
+            decisions[decision_count].dir = sign(
+                    common_corner[comm_corner[0]].distance_y
+                            - room[present_room].distance_y);
+
+            decision_count++;
+
+            //Now bot will be in 1st common corner
+            decisions[decision_count].distance = abs(
+                    common_corner[comm_corner[1]].distance_x
+                            - common_corner[comm_corner[0]].distance_x);
+            decisions[decision_count].dir = 2 * sign(
+                    common_corner[comm_corner[1]].distance_x
+                            - common_corner[comm_corner[0]].distance_x);
+
+            decision_count++;
+            //Now bot will be in 2nd common corner
+            decisions[decision_count].distance = abs(
+                    room[dest_room].distance_y
+                            - common_corner[comm_corner[1]].distance_y);
+            decisions[decision_count].dir = sign(
+                    room[dest_room].distance_y
+                            - common_corner[comm_corner[1]].distance_y);
+
+        }
+        else if (present_corridor % 2 == 1)
+        {
+            //Bot is on Y = 0 or Y = 50
+            decisions[decision_count].distance = abs(
+                    common_corner[comm_corner[0]].distance_x
+                            - room[present_room].distance_x);
+            decisions[decision_count].dir = sign(
+                    common_corner[comm_corner[0]].distance_x
+                            - room[present_room].distance_x);
+
+            decision_count++;
+
+            //Now bot will be in 1st common corner
+            decisions[decision_count].distance = abs(
+                    common_corner[comm_corner[1]].distance_y
+                            - common_corner[comm_corner[0]].distance_y);
+            decisions[decision_count].dir = sign(
+                    common_corner[comm_corner[1]].distance_y
+                            - common_corner[comm_corner[0]].distance_y);
+
+            //Now bot will be in 2nd common corner
+            decision_count++;
+            decisions[decision_count].distance = abs(
+                    common_corner[comm_corner[1]].distance_x
+                            - room[present_room].distance_x);
+            decisions[decision_count].dir = 2 * sign(
+                    common_corner[comm_corner[1]].distance_x
+                            - room[present_room].distance_x);
+
+        }
+
+    }
+}
+
 void WaitForMsg()
 {
-    char response[2];
+    char response[3];
     if (UI_SerialAvailable() > 0)
     {
         //Read Line and Parse data
         UI_read_line(response);
         dest_room = response[0] - '0';
-        destination.distance_x = room[dest_room].distance_x;
-        destination.distance_y = room[dest_room].distance_y;
-        destination.side = room[dest_room].side;
-        set_dest_corridor();
+        dest_room = dest_room * 10;
+        dest_room += (response[1] - '0');
+        if (dest_room != present_room)
+        {
+            make_decision_array();
+        }
     }
 }
 
-void set_dest_corridor()
+uint8_t det_corridor(int room_number)
 {
-    if (destination.distance_x != 0)
+    if (room[room_number].distance_x == 0)
     {
-        dest_corridor |= 0x01;
-    }
-    else
-    {
-        dest_corridor &= ~(0x01);
+        //Bot is in corridor 0
+        return 0;
     }
 
-    if (destination.distance_y != 0)
+    if (room[room_number].distance_y == 0)
     {
-        dest_corridor |= 0x02;
+        //Bot is in corridor 1
+        return 1;
     }
-    else
-    {
-        dest_corridor &= ~(0x02);
-    }
-}
 
-void det_dis_dir()
-{
-    if (destination.distance_x == 0)
+    if (room[room_number].distance_x == X_MAX)
     {
-        if ((present_corridor & 0x02) || (present_corridor == 0))
-        {
-            change_corridor = 0;
-            //Bot is there on Y-Axis or origin
-            if ((destination.distance_y - present.distance_y) > 0.0)
-            {
-                dir = 1;
-                dis = destination.distance_y - present.distance_y;
-            }
-            else
-            {
-                dir = -1;
-                dis = present.distance_y - destination.distance_y;
-            }
-        }
-        else if ((present_corridor & 0x01))
-        {
-            change_corridor = 1;
-            //Bot is there on X-axis but need to go to room on Y-axis
-            if (present.distance_x > 0)
-            {
-                dir = -2;
-                dis = present.distance_x;
-            }
-            else
-            {
-                dir = 2;
-                dis = -present.distance_x;
-            }
-        }
+        //Bot is in corridor 2
+        return 2;
     }
-    else if (destination.distance_y == 0)
+
+    if (room[room_number].distance_y == Y_MAX)
     {
-        if ((present_corridor & 0x01) || (present_corridor == 0))
-        {
-            change_corridor = 0;
-            //Bot is there on X-Axis or origin
-            if ((destination.distance_x - present.distance_x) > 0.0)
-            {
-                dir = 2;
-                dis = destination.distance_x - present.distance_x;
-            }
-            else
-            {
-                dir = -2;
-                dis = present.distance_x - destination.distance_x;
-            }
-        }
-        else if ((present_corridor & 0x02))
-        {
-            change_corridor = 1;
-            //Bot is there on X-axis but need to go to room on Y-axis
-            if (present.distance_y > 0)
-            {
-                dir = -1;
-                dis = present.distance_y;
-            }
-            else
-            {
-                dir = 1;
-                dis = -1 * present.distance_y;
-            }
-        }
+        //Bot is in corridor 3
+        return 3;
     }
+
+    return 0;
 }
 
 void correct_orientation()
 {
     float error[3] = { 0, 0, 0 };
-    unsigned long prev_ms = millis(), Kp = 0.7;
+    unsigned long prev_ms = millis();
 
     while ((millis() - prev_ms) < 500)
     {
@@ -420,7 +705,7 @@ void move(float distance, int dir)
     {
     case 1:
     {
-        for (i = 0; i <= 100; i++)
+        for (i = 0; i <= 80; i++)
         {
             V[0] = 0;
             V[1] = (float) i / 100;
@@ -454,7 +739,7 @@ void move(float distance, int dir)
             V[2] = 0;
             set_velocity();
         }
-        for (i = 100; i >= 0; i--)
+        for (i = 80; i >= 0; i--)
         {
             V[0] = 0;
             V[1] = (float) i / 100;
@@ -466,7 +751,7 @@ void move(float distance, int dir)
         break;
     case -1:
     {
-        for (i = 0; i <= 100; i++)
+        for (i = 0; i <= 80; i++)
         {
             V[0] = 0;
             V[1] = -(float) i / 100;
@@ -500,7 +785,7 @@ void move(float distance, int dir)
             V[2] = 0;
             set_velocity();
         }
-        for (i = 100; i >= 0; i--)
+        for (i = 80; i >= 0; i--)
         {
             V[0] = 0;
             V[1] = -(float) i / 100;
@@ -512,7 +797,7 @@ void move(float distance, int dir)
         break;
     case 2:
     {
-        for (i = 0; i <= 100; i++)
+        for (i = 0; i <= 80; i++)
         {
             V[0] = 1 * (float) i / 100;
             ;
@@ -547,7 +832,7 @@ void move(float distance, int dir)
             V[2] = 0;
             set_velocity();
         }
-        for (i = 100; i >= 0; i--)
+        for (i = 80; i >= 0; i--)
         {
             V[0] = 1 * (float) i / 100;
             V[1] = 0;
@@ -559,7 +844,7 @@ void move(float distance, int dir)
         break;
     case -2:
     {
-        for (i = 0; i <= 100; i++)
+        for (i = 0; i <= 80; i++)
         {
             V[0] = -1 * (float) i / 100;
             V[1] = 0;
@@ -583,7 +868,7 @@ void move(float distance, int dir)
             V[2] = 0;
             set_velocity();
         }
-        for (i = 100; i >= 0; i--)
+        for (i = 80; i >= 0; i--)
         {
             V[0] = -1 * (float) i / 100;
             V[1] = 0;

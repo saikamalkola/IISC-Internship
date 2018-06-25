@@ -32,6 +32,12 @@ struct Position
     volatile float theta;
 } position = { 0, 0, 0 };
 
+extern struct location
+{
+    float distance; //Distance between initial point and origin
+    uint8_t side;   //Left - 0 Right - 1
+} present;
+
 void TIMER0_TA_Handler(void)
 {
     int i = 0;
@@ -60,6 +66,7 @@ void TIMER0_TA_Handler(void)
 //            + (d_LR * sinf(position.theta + M_PI_2 + d_theta));
 //    position.theta += ((theta_FB + theta_LR) / 2);
 
+    present.distance = position.y;
     for (i = 0; i < 4; i++)
     {
         velocity[i] = encoder_value[i]; //In RPM Conversion factor = (60*1000)/(1200*50) = 1

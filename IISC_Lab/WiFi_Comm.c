@@ -17,6 +17,41 @@ extern struct Position
     volatile float theta;
 } position;
 
+void UI_read_line(char *buffer)
+{
+    int new_line = 0, count = 0;
+    while (!new_line)
+    {
+        buffer[count] = UI_InChar();
+        if (buffer[count] == '\n')
+        {
+            buffer[count] = '\n';
+            new_line = 1;
+        }
+        count++;
+    }
+}
+
+char UI_InChar(void)
+{
+    while ((UART1_FR_R & UART_FR_RXFE) != 0)
+        ;
+    return ((char) (UART1_DR_R & 0xFF));
+}
+
+int UI_SerialAvailable()
+{
+    if ((UART1_FR_R & UART_FR_RXFE) == 0)
+    {
+        return 1;
+    }
+
+    else
+    {
+        return -1;
+    }
+}
+
 void UI_print_line(char *data)
 {
     int k = 0;

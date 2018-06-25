@@ -18,13 +18,15 @@
 #include "KinModel.h"
 #include "WiFi_Comm.h"
 
-#define CORRECTION_TIME 10000L
+#define CORRECTION_TIME 5000L
 //#include "FreeRTOS.h"
 //#include "task.h"
 //#include "queue.h"
 //#include "semphr.h"
 
 //Function definitions
+void det_dis_dir();
+void WaitForMsg();
 void delayMs(int n);
 void DisableInterrupts(void);
 void EnableInterrupts(void);
@@ -44,6 +46,7 @@ volatile float distance[4] = { 0, 0, 0, 0 };
 extern float w[4];
 extern float V[3];
 
+volatile float dis = 0.0;
 volatile int dir = 1;
 volatile float dis_PID = 0, dis_P = 0, dis_I = 0, dis_D = 0;
 volatile float dis_Kp = 0.003, dis_Ki = 0, dis_Kd = 0;
@@ -54,6 +57,20 @@ extern struct Position
     volatile float y;
     volatile float theta;
 } position;
+
+struct location
+{
+    float distance; //Distance between initial point and origin
+    uint8_t side;   //Left - 0 Right - 1
+};
+
+struct location room[5] = { { 8000, 0 }, { 16000, 1 }, { 24000, 2 },
+                            { 30000, 3 }, { 40000, 4 } };
+
+struct location present = { 0, 0 }; //Initial Postion = 0 (Embedded Systems Lab)
+struct location destination = { 40000, 0 };
+
+int present_room = -1, dest_room = -1;  //Index of Lab
 
 int main()
 {
@@ -70,57 +87,87 @@ int main()
     init_timer2A(50);
     EnableInterrupts();
     delayMs(2000);
+    PCA9685_digitalWrite(GREEN_LED, 1);
+    delayMs(500);
+    PCA9685_digitalWrite(GREEN_LED, 0);
+    delayMs(500);
+
+    while(1)
+    {
+
+    }
     while (1)
     {
-        int i = 0;
-        correct_orientation();
-//        while (1)
-//        {
-//            PCA9685_digitalWrite(BUZZER, 1);
-//            delayMs(1);
-//            PCA9685_digitalWrite(BUZZER, 0);
-//            delayMs(1);
-//
-//        }
-//        while (1)
-//        {
-//            for(i = 0; i < 4; i++)
-//            {
-//                SerialPrintInt(distance[i]);
-//                UART_OutChar('\t');
-//            }
-//            UART_OutChar('\n');
-//        }
-//        while (1)
-//        {
-//            SerialPrintInt(position.x);
-//            UART_OutChar('\t');
-//            SerialPrintInt(position.y);
-//            UART_OutChar('\t');
-//            SerialPrintInt(position.theta * 180 / 3.14);
-//            UART_OutChar('\n');
-//        }
-////// 51200 21305
-//          dir = 1;
-//         // delayMs(10000);
-//          dir = 2;
-//          delayMs(10000);
-//        UART_OutChar('F');
-//        dir = 1;
-//        move(50000, 1);
-//        delayMs(500);
-////        dir = -2;
-////        move(20000, -2);
-////        delayMs(500);
-////        UART_OutChar('R');
-//        dir = -1;
-//        move(50000, -1);
-//        delayMs(500);
-//        UART_OutChar('B');
-//        dir = 2;
-//        move(20000, 2);
-//        delayMs(500);
-//        UART_OutChar('\n');
+        if (present_room != dest_room)
+        {
+            det_dis_dir();
+            move(dis, dir);
+            if (destination.side == 0)
+            {
+                //left side Beep once
+                PCA9685_digitalWrite(BUZZER, 1);
+                delayMs(500);
+                PCA9685_digitalWrite(BUZZER, 0);
+                delayMs(500);
+            }
+            else
+            {
+                //left side Beep once
+                PCA9685_digitalWrite(BUZZER, 1);
+                delayMs(250);
+                PCA9685_digitalWrite(BUZZER, 0);
+                delayMs(250);
+                PCA9685_digitalWrite(BUZZER, 1);
+                delayMs(250);
+                PCA9685_digitalWrite(BUZZER, 0);
+                delayMs(250);
+            }
+            present_room = dest_room;
+        }
+        //WaitForMsg();   //Wait for person to press button in UI
+    }
+}
+
+int correction_range_check()
+{
+    if ((present.distance > 10000.0) && (present.distance < 35000.0))
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void WaitForMsg()
+{
+    char response[2];
+    if (UI_SerialAvailable() > 0)
+    {
+        //Read Line and Parse data
+        UI_read_line(response);
+        print_line(response);
+        UART_OutChar('\t');
+        dest_room = response[0] - '0';
+        UART_OutChar(response[0]);
+        UART_OutChar('\n');
+        destination.distance = room[dest_room].distance;
+        destination.side = room[dest_room].side;
+    }
+}
+
+void det_dis_dir()
+{
+    if ((destination.distance - present.distance) > 0.0)
+    {
+        dir = 1;
+        dis = destination.distance - present.distance;
+    }
+    else
+    {
+        dir = -1;
+        dis = present.distance - destination.distance;
     }
 }
 
@@ -151,73 +198,64 @@ void correct_orientation()
 //    }
 //
     prev_ms = millis();
-    while (1)//(millis() - prev_ms) < 2000)
+    while ((millis() - prev_ms) < 2000)
     {
         int i = 0;
         error[1] = distance[0] - distance[1];
         error[2] = distance[2] - distance[3];
-        if((distance[0] + distance[1]) > 2000)
+        if ((distance[0] + distance[1]) > 2000)
         {
-            if(distance[0] > 900 && distance[1] > 900)
+            if (distance[0] > 900 && distance[1] > 900)
             {
                 error[1] = 0;
             }
-            if(distance[0] > distance[1])
+            if (distance[0] > distance[1])
             {
-                error[1] =  890 - distance[1];
+                error[1] = 890 - distance[1];
             }
             else
             {
-                error[1] =  distance[0] - 890;
+                error[1] = distance[0] - 890;
             }
         }
-        if((distance[2] + distance[3]) > 2000)
+        if ((distance[2] + distance[3]) > 2000)
         {
-            if(distance[2] > 900 && distance[3] > 900)
+            if (distance[2] > 900 && distance[3] > 900)
             {
                 error[2] = 0;
             }
-            if(distance[2] > distance[3])
+            if (distance[2] > distance[3])
             {
-                error[2] =  890 - distance[3];
+                error[2] = 890 - distance[3];
             }
             else
             {
-                error[2] =  distance[2] - 890;
+                error[2] = distance[2] - 890;
             }
         }
-        for(i = 0; i < 4; i++)
+        for (i = 0; i < 4; i++)
         {
-            if(distance[i] == -1)
+            if (distance[i] == -1)
             {
                 distance[i] = 890;
             }
-            printString_UI("D :");
-            UIPrintInt(distance[i]);
-            UI_OutChar('\t');
         }
-        printString_UI("Ex :");
-        UIPrintInt(error[2]);
-        UI_OutChar('\t');
-        printString_UI("Ey :");
-        UIPrintInt(error[1]);
-        UI_OutChar('\n');
         switch (abs(dir))
         {
         case 1:
         {
             dis_P = dis_Kp * error[2];
             dis_PID = dis_P + dis_D;
-            if (abs(dis_PID) >  1)
+            if (abs(dis_PID) > 1)
             {
                 dis_PID = sign(dis_PID) * 1.5;
             }
             V[0] = -dis_PID;
             V[1] = 0;
             V[2] = 0;
-          //  set_velocity();
-    //            set_motor(0, dis_PID);
-    //            set_motor(1, -dis_PID);
+            set_velocity();
+            //            set_motor(0, dis_PID);
+            //            set_motor(1, -dis_PID);
         }
             break;
         case 2:
@@ -231,7 +269,7 @@ void correct_orientation()
             V[0] = 0;
             V[1] = dis_PID;
             V[2] = 0;
-          //  set_velocity();
+            set_velocity();
         }
             break;
         }
@@ -294,15 +332,19 @@ void move(float distance, int dir)
         prev_ms = millis();
         while ((current - previous) < distance)
         {
-            SerialPrintInt(position.x);
-            UART_OutChar('\t');
-            SerialPrintInt(position.y);
-            UART_OutChar('\t');
-            SerialPrintInt(position.theta * 180 / 3.14);
-            UART_OutChar('\n');
             if ((millis() - prev_ms) > CORRECTION_TIME)
             {
-                correct_orientation();
+                if (correction_range_check())
+                {
+                    correct_orientation();
+                }
+                else
+                {
+                    PCA9685_digitalWrite(BUZZER, 1);
+                    delayMs(100);
+                    PCA9685_digitalWrite(BUZZER, 0);
+                    delayMs(100);
+                }
                 prev_ms = millis();
             }
             current = position.y;
@@ -310,8 +352,6 @@ void move(float distance, int dir)
             V[1] = 1.0;
             V[2] = 0;
             set_velocity();
-//            motor(2, 12000 + 1000);
-//            motor(3, -11000);
         }
         for (i = 100; i >= 0; i--)
         {
@@ -321,8 +361,6 @@ void move(float distance, int dir)
             set_velocity();
             delayMs(1);
         }
-//        motor(2,0);
-//        motor(3,0);
     }
         break;
     case -1:
@@ -342,7 +380,17 @@ void move(float distance, int dir)
         {
             if ((millis() - prev_ms) > CORRECTION_TIME)
             {
-                correct_orientation();
+                if (correction_range_check())
+                {
+                    correct_orientation();
+                }
+                else
+                {
+                    PCA9685_digitalWrite(BUZZER, 1);
+                    delayMs(100);
+                    PCA9685_digitalWrite(BUZZER, 0);
+                    delayMs(100);
+                }
                 prev_ms = millis();
             }
             current = position.y;
@@ -350,8 +398,6 @@ void move(float distance, int dir)
             V[1] = -1;
             V[2] = 0;
             set_velocity();
-//            motor(2, -11000);
-//            motor(3, 11000);
         }
         for (i = 100; i >= 0; i--)
         {
@@ -361,8 +407,6 @@ void move(float distance, int dir)
             set_velocity();
             delayMs(1);
         }
-//        motor(2,0);
-//        motor(3,0);
     }
         break;
     case 2:
@@ -391,8 +435,6 @@ void move(float distance, int dir)
             V[1] = 0;
             V[2] = 0;
             set_velocity();
-//            motor(0, -11000);
-//            motor(1, 11000);
         }
         for (i = 100; i >= 0; i--)
         {
@@ -431,9 +473,6 @@ void move(float distance, int dir)
             V[1] = 0;
             V[2] = 0;
             set_velocity();
-            delayMs(1);
-//            motor(0, 11000);
-//            motor(1, -11000);
         }
         for (i = 100; i >= 0; i--)
         {

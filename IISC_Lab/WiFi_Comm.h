@@ -13,6 +13,9 @@ void UI_OutChar(char data);
 void printString_UI(char *msg);
 void UART1_Init(void);
 void UIPrintInt(int integer);
+int UI_SerialAvailable();
+char UI_InChar(void);
+void UI_read_line(char *buffer);
 
 
 

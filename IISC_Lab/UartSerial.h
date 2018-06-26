@@ -20,4 +20,4 @@ void read_line(char *buffer);
 void printString(char *msg);
 void print_line(char *data);
 void UART_Init(void);
-
+int ultrasonic(int direction);

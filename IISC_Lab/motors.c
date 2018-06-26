@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include "inc/tm4c123gh6pm.h"
 #include "motors.h"
+#include "PCA9685.h"
 
 extern volatile int desired_velocity[4];
 
@@ -23,6 +24,22 @@ void motors(float *value)
 void set_motor(uint8_t index, int set_point)
 {
     desired_velocity[index] = set_point;
+}
+
+void brake()
+{
+    PCA9685_digitalWrite(0, 1); //Brake
+    PCA9685_digitalWrite(1, 1); //Brake
+    PCA9685_digitalWrite(2, 1); //Brake
+    PCA9685_digitalWrite(3, 1); //Brake
+}
+
+void no_brake()
+{
+    PCA9685_digitalWrite(0, 0); //No Brake
+    PCA9685_digitalWrite(1, 0); //No Brake
+    PCA9685_digitalWrite(2, 0); //No Brake
+    PCA9685_digitalWrite(3, 0); //No Brake
 }
 
 void motor(uint8_t index, int value)

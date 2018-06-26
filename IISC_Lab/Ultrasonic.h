@@ -9,6 +9,8 @@
 #define ULTRASONIC_H_
 #endif /* ULTRASONIC_H_ */
 
+#define OBSTACLE_DIS_THRESH 1000
+
 #define ECHO_PIN0   ((GPIO_PORTD_DATA_R >> 0) & 0x01)
 #define ECHO_PIN1   ((GPIO_PORTD_DATA_R >> 1) & 0x01)
 #define ECHO_PIN2   ((GPIO_PORTD_DATA_R >> 2) & 0x01)

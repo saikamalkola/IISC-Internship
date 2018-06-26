@@ -18,8 +18,8 @@
 #include "KinModel.h"
 #include "WiFi_Comm.h"
 
-#define X_MAX   20000
-#define Y_MAX   50000
+#define X_MAX   20500
+#define Y_MAX   49750
 
 #define CORRECTION_TIME 5000L
 
@@ -29,6 +29,8 @@
 //#include "semphr.h"
 
 //Function definitions
+void obstacle_avoidance();
+void buzz(int ms);
 void WaitForMsg();
 void delayMs(int n);
 void DisableInterrupts(void);
@@ -62,6 +64,8 @@ volatile float dis_Kp = 0.003, dis_Ki = 0, dis_Kd = 0;
 float limit_L = 0, limit_H = 0;
 uint8_t change_corridor = 0;
 
+uint8_t obstacle = 0;
+
 extern struct Position
 {
     volatile float x;
@@ -79,28 +83,50 @@ struct location
 struct location common_corner[4] = { { 0, 0, 0 }, { X_MAX, 0, 0 }, { X_MAX,
                                                                      Y_MAX, 0 },
                                      { 0, Y_MAX, 0 } };
-struct location room[21] = {
+struct location room[42] = {
                             { 0, 0, 0 },
-                            { 0, 8000, 0 },
-                            { 0, 16000, 1 },
-                            { 0, 24000, 1 },
-                            { 0, 32000, 0 },
-                            { 0, 40000, 1 },
-                            { 0, Y_MAX, 0 },
-                            { 5000, 0, 0},
-                            { 10000, 0, 0},
-                            { 15000, 0, 0},
-                            { X_MAX, 0, 0},
-                            { X_MAX, 8000, 0},
-                            { X_MAX, 16000, 0},
-                            { X_MAX, 24000, 0},
-                            { X_MAX, 32000, 0},
-                            { X_MAX, 40000, 0},
+                            { 0, 5000, 0 },
+                            { 0, 8750, 1 },
+                            { 0, 12250, 0 },
+                            { 0, 12250, 1 },
+                            { 0, 13750, 0 },
+                            { 0, 19500, 1 },
+                            { 0, 26250, 0 },
+                            { 0, 28000, 0 },
+                            { 0, 32000, 1 },
+                            { 0, 35250, 0 },
+                            { 0, 37250, 1 },
+                            { 0, 38750, 1 },
+                            { 0, 42500, 1 },
+                            { 0, 48250, 1 },
+                            { 0, Y_MAX, 1 },
+                            { 3250, Y_MAX, 0},
+                            { 9000, Y_MAX, 1},
+                            { 10750, Y_MAX, 1},
+                            { 12500, Y_MAX, 0},
+                            { 16250, Y_MAX, 0},
                             { X_MAX, Y_MAX, 0},
-                            { 0, Y_MAX, 0},
-                            { 5000, Y_MAX, 0},
-                            { 10000, Y_MAX, 0},
-                            { 15000, Y_MAX, 0},
+                            { X_MAX, 43250, 0},
+                            { X_MAX, 40500, 0},
+                            { X_MAX, 38750, 1},
+                            { X_MAX, 35000, 1},
+                            { X_MAX, 30700, 0},
+                            { X_MAX, 29750, 0},
+                            { X_MAX, 23250, 0},
+                            { X_MAX, 21750, 0},
+                            { X_MAX, 18250, 1},
+                            { X_MAX, 15500, 0},
+                            { X_MAX, 14500, 0},
+                            { X_MAX, 12500, 1},
+                            { X_MAX, 11000, 1},
+                            { X_MAX, 5250, 1},
+                            { X_MAX, 3875, 0},
+                            { X_MAX, 0, 0},
+                            { 19000, 0, 0},
+                            { 11750, 0, 1},
+                            { 10000, 0, 1},
+                            { 6000, 0, 0},
+                            { 2500, 0, 0}
                             };
 
 struct location present = { 0, 0, 0 }; //Initial Postion = 0 (Embedded Systems Lab)
@@ -139,17 +165,21 @@ int main()
     init_motors();  //Initializing Motor Pins
     UART_Init();    //Initialising UART
     UART1_Init();
-    init_BMS();
+    //init_BMS();
     init_I2C1();
     init_PCA9685();
     init_timer0A(25);
     init_timer1A();
     init_timer2A(50);
     EnableInterrupts();
+
+    //Green Signal indicating initialization routines executed successfully
+
     PCA9685_digitalWrite(GREEN_LED, 1);
     delayMs(500);
     PCA9685_digitalWrite(GREEN_LED, 0);
     delayMs(500);
+
     while (1)
     {
         while (present_room != dest_room)
@@ -170,7 +200,7 @@ int main()
             }
             else
             {
-                //left side Beep once
+                //Right side Beep Twice
                 buzz(250);
                 buzz(250);
             }
@@ -199,8 +229,8 @@ int correction_range_check()
     }
     else if (abs(dir) == 2)
     {
-        limit_L = 6000;
-        limit_H = 12000;
+        limit_L = 4000;
+        limit_H = 16000;
         check_distance = present.distance_x;
     }
 
@@ -696,6 +726,19 @@ void correct_orientation()
     }
 }
 
+void obstacle_avoidance()
+{
+    if (ultrasonic(dir) > 50 && ultrasonic(dir) < OBSTACLE_DIS_THRESH)
+    {
+//        while(ultrasonic(dir) < OBSTACLE_DIS_THRESH)
+//        {
+//            buzz(100);
+//            brake();
+//        }
+//        no_brake();
+    }
+}
+
 void move(float distance, int dir)
 {
     int i = 0;
@@ -718,6 +761,7 @@ void move(float distance, int dir)
         prev_ms = millis();
         while ((current - previous) < distance)
         {
+            obstacle_avoidance();
             if ((millis() - prev_ms) > CORRECTION_TIME)
             {
                 if (correction_range_check())
@@ -735,7 +779,7 @@ void move(float distance, int dir)
             }
             current = position.y;
             V[0] = 0;
-            V[1] = 1.0;
+            V[1] = 0.8;
             V[2] = 0;
             set_velocity();
         }
@@ -764,6 +808,7 @@ void move(float distance, int dir)
         prev_ms = millis();
         while ((previous - current) < distance)
         {
+            obstacle_avoidance();
             if ((millis() - prev_ms) > CORRECTION_TIME)
             {
                 if (correction_range_check())
@@ -781,7 +826,7 @@ void move(float distance, int dir)
             }
             current = position.y;
             V[0] = 0;
-            V[1] = -1;
+            V[1] = -0.8;
             V[2] = 0;
             set_velocity();
         }
@@ -811,6 +856,7 @@ void move(float distance, int dir)
         current = previous;
         while ((current - previous) < distance)
         {
+            obstacle_avoidance();
             if ((millis() - prev_ms) > CORRECTION_TIME)
             {
                 if (correction_range_check())
@@ -827,7 +873,7 @@ void move(float distance, int dir)
                 prev_ms = millis();
             }
             current = position.x;
-            V[0] = 1;
+            V[0] = 0.8;
             V[1] = 0;
             V[2] = 0;
             set_velocity();
@@ -857,13 +903,14 @@ void move(float distance, int dir)
         current = previous;
         while ((previous - current) < distance)
         {
+            obstacle_avoidance();
             if ((millis() - prev_ms) > CORRECTION_TIME)
             {
                 correct_orientation();
                 prev_ms = millis();
             }
             current = position.x;
-            V[0] = -1;
+            V[0] = -0.8;
             V[1] = 0;
             V[2] = 0;
             set_velocity();

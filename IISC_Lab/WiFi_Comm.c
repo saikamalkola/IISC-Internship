@@ -76,8 +76,8 @@ void UIPrintInt(int integer)
 
 void update_UI()
 {
-    UIPrintInt(read_battery_voltage() * 1000);
-    UI_OutChar('\t');
+    //UIPrintInt(read_battery_voltage() * 1000);
+    //UI_OutChar('\t');
     UIPrintInt(position.x);
     UI_OutChar('\t');
     UIPrintInt(position.y);

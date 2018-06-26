@@ -14,4 +14,5 @@ void init_motors(void);
 void motor(uint8_t index, int value);
 void motors(float *value);
 void set_motor(uint8_t index, int value);
-
+void brake();
+void no_brake();

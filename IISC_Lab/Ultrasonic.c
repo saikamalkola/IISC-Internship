@@ -18,6 +18,7 @@
 
 void delayMs(int n);
 
+extern volatile int dir;
 extern volatile float distance[4];
 volatile int count = 0;
 
@@ -30,8 +31,8 @@ unsigned long micros()
 
 unsigned long millis()
 {
-    float mil = (((float)micros_overflow * 65.536) + (TIME_US / 1000));
-    return (unsigned long)mil;
+    float mil = (((float) micros_overflow * 65.536) + (TIME_US / 1000));
+    return (unsigned long) mil;
 }
 
 void TIMER1_TA_Handler(void)
@@ -42,15 +43,44 @@ void TIMER1_TA_Handler(void)
     read_back = TIMER1_ICR_R;
 }
 
+int ultrasonic(int direction)
+{
+    int dist = 0;
+    switch (direction)
+    {
+    case 1:
+    {
+        dist = (int) distance[0];
+    }
+        break;
+    case -1:
+    {
+        dist = (int) distance[1];
+    }
+        break;
+    case 2:
+    {
+        dist = (int) distance[2];
+    }
+        break;
+    case -2:
+    {
+        dist = (int) distance[3];
+    }
+        break;
+    }
+    return dist;
+}
+
 void TIMER2_TA_Handler(void)
 {
 
-    if(count > 4)
+    if (count > 4)
     {
         update_UI();
         count = 0;
     }
-    if(count != 4)
+    if (count != 4)
     {
         PCA9685_digitalWrite(count + 4, 0); //Low
         delayMs(1);
@@ -161,8 +191,10 @@ void Ultrasonic_Init(void)
 
     //Interrupt Settings
     GPIO_PORTD_IBE_R |= (0x0F); //Enabling Both Edge Interrupts on pins PD0-3
-    GPIO_PORTD_ICR_R |= (0x0F);; //Clearing interrupt flags of PD0-3
-    GPIO_PORTD_IM_R |= (0x0F);;   //Unmask PD0-3 interrupts
+    GPIO_PORTD_ICR_R |= (0x0F);
+    ; //Clearing interrupt flags of PD0-3
+    GPIO_PORTD_IM_R |= (0x0F);
+    ;   //Unmask PD0-3 interrupts
 }
 
 void init_timer1A(void)

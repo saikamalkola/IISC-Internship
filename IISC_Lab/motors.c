@@ -23,7 +23,7 @@ void motors(float *value)
 
 void set_motor(uint8_t index, int set_point)
 {
-    desired_velocity[index] = set_point;
+    //desired_velocity[index] = set_point;
 }
 
 void brake()

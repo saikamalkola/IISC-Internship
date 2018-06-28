@@ -15,6 +15,7 @@ selfNavigation.obj: /home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/in
 selfNavigation.obj: /home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/_defs.h
 selfNavigation.obj: ../KinModel.h
 selfNavigation.obj: ../WiFi_Comm.h
+selfNavigation.obj: ../MPU9250_YawCalc.h
 
 ../selfNavigation.c: 
 /home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/stdbool.h: 
@@ -31,3 +32,4 @@ selfNavigation.obj: ../WiFi_Comm.h
 /home/kamal/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.6.LTS/include/_defs.h: 
 ../KinModel.h: 
 ../WiFi_Comm.h: 
+../MPU9250_YawCalc.h: 

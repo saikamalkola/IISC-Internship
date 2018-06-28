@@ -14,6 +14,7 @@
 #define COUNT_DOWN 0x00000000
 #define COUNT_UP 0x00000010
 #define TATORIM 0x01
+#define TBTORIM 0x00000100
 
 #define BIT32_MODE 0
 #define RTC_MODE 1

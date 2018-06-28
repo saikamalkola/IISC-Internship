@@ -17,9 +17,11 @@
 #include <math.h>
 #include "KinModel.h"
 #include "WiFi_Comm.h"
+#include "MPU9250_YawCalc.h"
 
 #define X_MAX   20500
 #define Y_MAX   49750
+#define RAMP_COMP 300
 
 #define CORRECTION_TIME 5000L
 
@@ -61,10 +63,17 @@ volatile int dir = 1;
 volatile float dis_PID = 0, dis_P = 0, dis_I = 0, dis_D = 0;
 volatile float dis_Kp = 0.003, dis_Ki = 0, dis_Kd = 0;
 
+
+float Kp = 0.5;
+
+extern volatile float yaw;
+
 float limit_L = 0, limit_H = 0;
 uint8_t change_corridor = 0;
 
 uint8_t obstacle = 0;
+
+volatile uint8_t ultra_correct = 0;
 
 extern struct Position
 {
@@ -81,53 +90,36 @@ struct location
 };
 
 struct location common_corner[4] = { { 0, 0, 0 }, { X_MAX, 0, 0 }, { X_MAX,
-                                                                     Y_MAX, 0 },
+Y_MAX,
+                                                                     0 },
                                      { 0, Y_MAX, 0 } };
-struct location room[42] = {
-                            { 0, 0, 0 },
-                            { 0, 5000, 0 },
-                            { 0, 8750, 1 },
-                            { 0, 12250, 0 },
-                            { 0, 12250, 1 },
-                            { 0, 13750, 0 },
-                            { 0, 19500, 1 },
-                            { 0, 26250, 0 },
-                            { 0, 28000, 0 },
-                            { 0, 32000, 1 },
-                            { 0, 35250, 0 },
-                            { 0, 37250, 1 },
-                            { 0, 38750, 1 },
-                            { 0, 42500, 1 },
-                            { 0, 48250, 1 },
-                            { 0, Y_MAX, 1 },
-                            { 3250, Y_MAX, 0},
-                            { 9000, Y_MAX, 1},
-                            { 10750, Y_MAX, 1},
-                            { 12500, Y_MAX, 0},
-                            { 16250, Y_MAX, 0},
-                            { X_MAX, Y_MAX, 0},
-                            { X_MAX, 43250, 0},
-                            { X_MAX, 40500, 0},
-                            { X_MAX, 38750, 1},
-                            { X_MAX, 35000, 1},
-                            { X_MAX, 30700, 0},
-                            { X_MAX, 29750, 0},
-                            { X_MAX, 23250, 0},
-                            { X_MAX, 21750, 0},
-                            { X_MAX, 18250, 1},
-                            { X_MAX, 15500, 0},
-                            { X_MAX, 14500, 0},
-                            { X_MAX, 12500, 1},
-                            { X_MAX, 11000, 1},
-                            { X_MAX, 5250, 1},
-                            { X_MAX, 3875, 0},
-                            { X_MAX, 0, 0},
-                            { 19000, 0, 0},
-                            { 11750, 0, 1},
-                            { 10000, 0, 1},
-                            { 6000, 0, 0},
-                            { 2500, 0, 0}
-                            };
+struct location room[43] = { { 0, 0, 0 }, { 0, 5000, 0 }, { 0, 8750, 1 }, {
+        0, 12250, 0 },
+                             { 0, 12250, 1 }, { 0, 13750, 0 }, { 0, 19500, 1 },
+                             { 0, 26250, 0 }, { 0, 28000, 0 }, { 0, 32000, 1 },
+                             { 0, 35250, 0 }, { 0, 37250, 1 }, { 0, 38750, 1 },
+                             { 0, 42500, 1 }, { 0, 48250, 1 }, { 0, Y_MAX, 1 },
+                             { 3250, Y_MAX, 0 }, { 9000, Y_MAX, 1 },
+                             { 10750, Y_MAX, 1 }, { 12500, Y_MAX, 0 }, { 16250,
+                                                                         Y_MAX,
+                                                                         0 },
+                             { X_MAX, Y_MAX, 0 }, { X_MAX, 43250, 0 }, { X_MAX,
+                                                                         40500,
+                                                                         0 },
+                             { X_MAX, 38750, 1 }, { X_MAX, 35000, 1 }, { X_MAX,
+                                                                         30700,
+                                                                         0 },
+                             { X_MAX, 29750, 0 }, { X_MAX, 23250, 0 }, { X_MAX,
+                                                                         21750,
+                                                                         0 },
+                             { X_MAX, 18250, 1 }, { X_MAX, 15500, 0 }, { X_MAX,
+                                                                         14500,
+                                                                         0 },
+                             { X_MAX, 12500, 1 }, { X_MAX, 11000, 1 },
+                             { X_MAX, 5250, 1 }, { X_MAX, 3875, 0 }, { X_MAX, 0,
+                                                                       0 },
+                             { 19000, 0, 0 }, { 11750, 0, 1 }, { 10000, 0, 1 },
+                             { 6000, 0, 0 }, { 2500, 0, 0 } };
 
 struct location present = { 0, 0, 0 }; //Initial Postion = 0 (Embedded Systems Lab)
 struct location destination = { 0, 0, 0 };
@@ -155,6 +147,7 @@ struct decision
     int dir;
 } decisions[3];
 
+extern uint8_t yaw_calib;
 uint8_t decision_count = 0;
 
 int main()
@@ -171,9 +164,17 @@ int main()
     init_timer0A(25);
     init_timer1A();
     init_timer2A(50);
+
+    init_I2C0();
+    init_MPU9250();
+    init_timer0B(50);    //Initialize timer to trigger interrup every 4ms
+
+    TIMER0_CTL_R |= TBEN;    //Enabling Timer As
     EnableInterrupts();
 
     //Green Signal indicating initialization routines executed successfully
+
+    while(!yaw_calib);
 
     PCA9685_digitalWrite(GREEN_LED, 1);
     delayMs(500);
@@ -223,8 +224,8 @@ int correction_range_check()
 
     if (abs(dir) == 1)
     {
-        limit_L = 10000;
-        limit_H = 35000;
+        limit_L = 5000;
+        limit_H = 42000;
         check_distance = present.distance_y;
     }
     else if (abs(dir) == 2)
@@ -265,7 +266,7 @@ uint8_t det_common_corner(uint8_t present_corridor, uint8_t dest_corridor)
     {
         common = 2;
     }
-    break;
+        break;
     case 7:
     {
         common = 3;
@@ -355,12 +356,12 @@ void make_decision_array()
     //determine in which corridor destination co-ordinate is there
     dest_corridor = det_corridor(dest_room);
 
-    if((present_corridor == 0 && dest_corridor == 3))
+    if ((present_corridor == 0 && dest_corridor == 3))
     {
         present_corridor = 4;
     }
 
-    if((present_corridor == 3 && dest_corridor == 0))
+    if ((present_corridor == 3 && dest_corridor == 0))
     {
         dest_corridor = 4;
     }
@@ -388,8 +389,9 @@ void make_decision_array()
         {
             decisions[decision_count].distance = abs(
                     room[dest_room].distance_x - room[present_room].distance_x);
-            decisions[decision_count].dir = 2 * sign(
-                    room[dest_room].distance_x - room[present_room].distance_x);
+            decisions[decision_count].dir = 2
+                    * sign(room[dest_room].distance_x
+                            - room[present_room].distance_x);
         }
     }
     else if (abs(dest_corridor - present_corridor) == 1)
@@ -434,8 +436,8 @@ void make_decision_array()
             decisions[decision_count].distance = abs(
                     room[dest_room].distance_x
                             - common_corner[common].distance_x);
-            decisions[decision_count].dir = 2 * sign(
-                    room[dest_room].distance_x
+            decisions[decision_count].dir = 2
+                    * sign(room[dest_room].distance_x
                             - common_corner[common].distance_x);
         }
         else if (present_corridor % 2 == 1)
@@ -444,8 +446,8 @@ void make_decision_array()
             decisions[decision_count].distance = abs(
                     common_corner[common].distance_x
                             - room[present_room].distance_x);
-            decisions[decision_count].dir = 2 * sign(
-                    common_corner[common].distance_x
+            decisions[decision_count].dir = 2
+                    * sign(common_corner[common].distance_x
                             - room[present_room].distance_x);
 
             decision_count++;
@@ -494,8 +496,8 @@ void make_decision_array()
             decisions[decision_count].distance = abs(
                     common_corner[comm_corner[1]].distance_x
                             - common_corner[comm_corner[0]].distance_x);
-            decisions[decision_count].dir = 2 * sign(
-                    common_corner[comm_corner[1]].distance_x
+            decisions[decision_count].dir = 2
+                    * sign(common_corner[comm_corner[1]].distance_x
                             - common_corner[comm_corner[0]].distance_x);
 
             decision_count++;
@@ -533,8 +535,8 @@ void make_decision_array()
             decisions[decision_count].distance = abs(
                     common_corner[comm_corner[1]].distance_x
                             - room[present_room].distance_x);
-            decisions[decision_count].dir = 2 * sign(
-                    common_corner[comm_corner[1]].distance_x
+            decisions[decision_count].dir = 2
+                    * sign(common_corner[comm_corner[1]].distance_x
                             - room[present_room].distance_x);
 
         }
@@ -588,8 +590,34 @@ uint8_t det_corridor(int room_number)
     return 0;
 }
 
+void correct_yaw()
+{
+    float yaw_error = yaw;
+    V[0] = 0;
+    V[1] = 0;
+    unsigned long prev_ms = millis();
+    while ((millis() - prev_ms) < 2000)
+    {
+        yaw_error = yaw;
+        if (abs(yaw_error) < 3)
+        {
+            V[2] = 0;
+        }
+        else
+        {
+            V[2] = Kp * yaw_error;
+        }
+        set_velocity();
+        delayMs(10);
+    }
+    motor(0, 0);
+    motor(1, 0);
+    motor(2, 0);
+    motor(3, 0);
+}
 void correct_orientation()
 {
+    ultra_correct = 1;
     float error[3] = { 0, 0, 0 };
     unsigned long prev_ms = millis();
 
@@ -600,17 +628,6 @@ void correct_orientation()
         motor(2, 0);
         motor(3, 0);
     }
-//
-//    prev_ms = millis();
-//    while ((millis() - prev_ms) < 2000)
-//    {
-//        error[2] = (-1 * position.theta * 180 / 3.14);
-//        V[0] = 0;
-//        V[1] = 0;
-//        V[2] = Kp * error[2];
-//        set_velocity();
-//        delayMs(10);
-//    }
 
     prev_ms = millis();
     while ((millis() - prev_ms) < 2000)
@@ -664,12 +681,10 @@ void correct_orientation()
             dis_PID = dis_P + dis_D;
             if (abs(dis_PID) > 1)
             {
-                dis_PID = sign(dis_PID) * 1.5;
+                dis_PID = sign(dis_PID) * 1;
             }
             V[0] = -dis_PID;
             V[1] = 0;
-            V[2] = 0;
-            set_velocity();
             //            set_motor(0, dis_PID);
             //            set_motor(1, -dis_PID);
         }
@@ -678,52 +693,17 @@ void correct_orientation()
         {
             dis_P = dis_Kp * error[1];
             dis_PID = dis_P + dis_D;
-            if (abs(dis_PID) > 1.5)
+            if (abs(dis_PID) > 1)
             {
-                dis_PID = sign(dis_PID) * 1.5;
+                dis_PID = sign(dis_PID) * 1;
             }
             V[0] = 0;
             V[1] = dis_PID;
-            V[2] = 0;
-            set_velocity();
         }
             break;
         }
     }
-//    Kp = 0.01;
-//    while ((millis() - prev_ms) < 2000)
-//    {
-//        error[0] = (position.x);
-//        V[0] = Kp * error[0];
-//        V[1] = 0;
-//        V[2] = 0;
-//        SerialPrintInt(V[0]);
-//        UART_OutChar('\n');
-//        set_velocity();
-//        delayMs(10);
-//    }
-//    Kp = 0.01;
-//    prev_ms = millis();
-//    while ((millis() - prev_ms) < 2000)
-//    {
-//        error[1] = (-1 * position.y);
-//        V[0] = 0;
-//        V[1] = Kp * error[1];
-//        V[2] = 0;
-//        SerialPrintInt(V[1]);
-//        UART_OutChar('\n');
-//        set_velocity();
-//        delayMs(10);
-//    }
-//
-    prev_ms = millis();
-    while ((millis() - prev_ms) < 2000)
-    {
-        motor(0, 0);
-        motor(1, 0);
-        motor(2, 0);
-        motor(3, 0);
-    }
+    ultra_correct = 0;
 }
 
 void obstacle_avoidance()
@@ -741,6 +721,7 @@ void obstacle_avoidance()
 
 void move(float distance, int dir)
 {
+    distance -= RAMP_COMP;
     int i = 0;
     float current = 0, previous = 0;
     unsigned long prev_ms = millis();
@@ -748,12 +729,12 @@ void move(float distance, int dir)
     {
     case 1:
     {
-        for (i = 0; i <= 80; i++)
+        for (i = 0; i <= 100; i++)
         {
             V[0] = 0;
             V[1] = (float) i / 100;
-            V[2] = 0;
-            set_velocity();
+//            V[2] = 0;
+//            set_velocity();
             delayMs(1);
         }
         previous = position.y;
@@ -761,9 +742,10 @@ void move(float distance, int dir)
         prev_ms = millis();
         while ((current - previous) < distance)
         {
-            obstacle_avoidance();
+            //obstacle_avoidance();
             if ((millis() - prev_ms) > CORRECTION_TIME)
             {
+                //correct_yaw();
                 if (correction_range_check())
                 {
                     correct_orientation();
@@ -779,28 +761,28 @@ void move(float distance, int dir)
             }
             current = position.y;
             V[0] = 0;
-            V[1] = 0.8;
-            V[2] = 0;
-            set_velocity();
+            V[1] = 1.0;
+//            V[2] = 0;
+//            set_velocity();
         }
-        for (i = 80; i >= 0; i--)
+        for (i = 100; i >= 0; i--)
         {
             V[0] = 0;
             V[1] = (float) i / 100;
-            V[2] = 0;
-            set_velocity();
+//            V[2] = 0;
+//            set_velocity();
             delayMs(1);
         }
     }
         break;
     case -1:
     {
-        for (i = 0; i <= 80; i++)
+        for (i = 0; i <= 100; i++)
         {
             V[0] = 0;
             V[1] = -(float) i / 100;
-            V[2] = 0;
-            set_velocity();
+//            V[2] = 0;
+//            set_velocity();
             delayMs(1);
         }
         previous = position.y;
@@ -808,9 +790,10 @@ void move(float distance, int dir)
         prev_ms = millis();
         while ((previous - current) < distance)
         {
-            obstacle_avoidance();
+            //obstacle_avoidance();
             if ((millis() - prev_ms) > CORRECTION_TIME)
             {
+                //correct_yaw();
                 if (correction_range_check())
                 {
                     correct_orientation();
@@ -826,29 +809,29 @@ void move(float distance, int dir)
             }
             current = position.y;
             V[0] = 0;
-            V[1] = -0.8;
-            V[2] = 0;
-            set_velocity();
+            V[1] = -1.0;
+//            V[2] = 0;
+//            set_velocity();
         }
-        for (i = 80; i >= 0; i--)
+        for (i = 100; i >= 0; i--)
         {
             V[0] = 0;
             V[1] = -(float) i / 100;
-            V[2] = 0;
-            set_velocity();
+//            V[2] = 0;
+//            set_velocity();
             delayMs(1);
         }
     }
         break;
     case 2:
     {
-        for (i = 0; i <= 80; i++)
+        for (i = 0; i <= 100; i++)
         {
             V[0] = 1 * (float) i / 100;
             ;
             V[1] = 0;
-            V[2] = 0;
-            set_velocity();
+//            V[2] = 0;
+//            set_velocity();
             delayMs(1);
         }
         prev_ms = millis();
@@ -856,9 +839,10 @@ void move(float distance, int dir)
         current = previous;
         while ((current - previous) < distance)
         {
-            obstacle_avoidance();
+            //obstacle_avoidance();
             if ((millis() - prev_ms) > CORRECTION_TIME)
             {
+                //correct_yaw();
                 if (correction_range_check())
                 {
                     correct_orientation();
@@ -873,24 +857,24 @@ void move(float distance, int dir)
                 prev_ms = millis();
             }
             current = position.x;
-            V[0] = 0.8;
+            V[0] = 1.0;
             V[1] = 0;
-            V[2] = 0;
-            set_velocity();
+//            V[2] = 0;
+//            set_velocity();
         }
         for (i = 80; i >= 0; i--)
         {
             V[0] = 1 * (float) i / 100;
             V[1] = 0;
-            V[2] = 0;
-            set_velocity();
+//            V[2] = 0;
+//            set_velocity();
             delayMs(1);
         }
     }
         break;
     case -2:
     {
-        for (i = 0; i <= 80; i++)
+        for (i = 0; i <= 100; i++)
         {
             V[0] = -1 * (float) i / 100;
             V[1] = 0;
@@ -903,24 +887,25 @@ void move(float distance, int dir)
         current = previous;
         while ((previous - current) < distance)
         {
-            obstacle_avoidance();
+            //obstacle_avoidance();
             if ((millis() - prev_ms) > CORRECTION_TIME)
             {
+                //correct_yaw();
                 correct_orientation();
                 prev_ms = millis();
             }
             current = position.x;
-            V[0] = -0.8;
+            V[0] = -1.0;
             V[1] = 0;
-            V[2] = 0;
-            set_velocity();
+//            V[2] = 0;
+//            set_velocity();
         }
-        for (i = 80; i >= 0; i--)
+        for (i = 100; i >= 0; i--)
         {
             V[0] = -1 * (float) i / 100;
             V[1] = 0;
-            V[2] = 0;
-            set_velocity();
+//            V[2] = 0;
+//            set_velocity();
             delayMs(1);
         }
     }

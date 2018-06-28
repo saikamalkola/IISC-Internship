@@ -7,7 +7,9 @@ CMD_SRCS += \
 ../tm4c123gh6pm.cmd 
 
 C_SRCS += \
+../BMS.c \
 ../KinModel.c \
+../MPU9250_YawCalc.c \
 ../PCA9685.c \
 ../UartSerial.c \
 ../Ultrasonic.c \
@@ -19,7 +21,9 @@ C_SRCS += \
 ../tm4c123gh6pm_startup_ccs.c 
 
 C_DEPS += \
+./BMS.d \
 ./KinModel.d \
+./MPU9250_YawCalc.d \
 ./PCA9685.d \
 ./UartSerial.d \
 ./Ultrasonic.d \
@@ -31,7 +35,9 @@ C_DEPS += \
 ./tm4c123gh6pm_startup_ccs.d 
 
 OBJS += \
+./BMS.obj \
 ./KinModel.obj \
+./MPU9250_YawCalc.obj \
 ./PCA9685.obj \
 ./UartSerial.obj \
 ./Ultrasonic.obj \
@@ -43,7 +49,9 @@ OBJS += \
 ./tm4c123gh6pm_startup_ccs.obj 
 
 OBJS__QUOTED += \
+"BMS.obj" \
 "KinModel.obj" \
+"MPU9250_YawCalc.obj" \
 "PCA9685.obj" \
 "UartSerial.obj" \
 "Ultrasonic.obj" \
@@ -55,7 +63,9 @@ OBJS__QUOTED += \
 "tm4c123gh6pm_startup_ccs.obj" 
 
 C_DEPS__QUOTED += \
+"BMS.d" \
 "KinModel.d" \
+"MPU9250_YawCalc.d" \
 "PCA9685.d" \
 "UartSerial.d" \
 "Ultrasonic.d" \
@@ -67,7 +77,9 @@ C_DEPS__QUOTED += \
 "tm4c123gh6pm_startup_ccs.d" 
 
 C_SRCS__QUOTED += \
+"../BMS.c" \
 "../KinModel.c" \
+"../MPU9250_YawCalc.c" \
 "../PCA9685.c" \
 "../UartSerial.c" \
 "../Ultrasonic.c" \

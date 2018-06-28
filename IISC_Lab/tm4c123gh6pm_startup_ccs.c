@@ -42,6 +42,7 @@ void GPIOPortF_Handler(void);
 void TIMER0_TA_Handler(void);
 void TIMER2_TA_Handler(void);
 void TIMER1_TA_Handler(void);
+void TIMER0_TB_Handler(void);
 
 //*****************************************************************************
 //
@@ -112,7 +113,7 @@ void (* const g_pfnVectors[])(void) =
     IntDefaultHandler,                      // ADC Sequence 3
     IntDefaultHandler,                      // Watchdog timer
     TIMER0_TA_Handler,                      // Timer 0 subtimer A
-    IntDefaultHandler,                      // Timer 0 subtimer B
+    TIMER0_TB_Handler,                      // Timer 0 subtimer B
     TIMER1_TA_Handler,                      // Timer 1 subtimer A
     IntDefaultHandler,                      // Timer 1 subtimer B
     TIMER2_TA_Handler,                      // Timer 2 subtimer A

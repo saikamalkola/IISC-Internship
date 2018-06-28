@@ -10,6 +10,7 @@
 #include "UartSerial.h"
 #include "WiFi_Comm.h"
 
+extern volatile float yaw;
 extern struct Position
 {
     volatile float x;
@@ -82,7 +83,7 @@ void update_UI()
     UI_OutChar('\t');
     UIPrintInt(position.y);
     UI_OutChar('\t');
-    UIPrintInt(position.theta * 180 / 3.14);
+    UIPrintInt(yaw);
     UI_OutChar('\n');
 }
 

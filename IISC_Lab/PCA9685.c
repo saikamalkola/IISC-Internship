@@ -67,8 +67,18 @@ void wireRead(uint8_t address, uint8_t *data, uint8_t num_bytes)
 {
     wireSend(address, (1 << 0) | (1 << 1));
     setRWMode(1);
+
+    if (num_bytes == 1)
+    {
+        I2C0_MCS_R = ((1 << 0) | (1 << 1) | (1 << 2));
+        waitAndErrorCheck();
+        *data = I2C0_MDR_R & 0xFF;
+        return;
+    }
+
     uint8_t i = 0;
-    I2C1_MCS_R = ((1 << 0) | (1 << 1) | (1 << 3)); //Configures START, RUN, STOP and DataAck bits
+
+    I2C0_MCS_R = ((1 << 0) | (1 << 1) | (1 << 3)); //Configures START, RUN, STOP and DataAck bits
     /*
      *  DACK-STOP-START-RUN
      *    3    2    1    0
@@ -77,13 +87,14 @@ void wireRead(uint8_t address, uint8_t *data, uint8_t num_bytes)
     {
         //Wait and Check for Error
         waitAndErrorCheck();
-        data[i] = I2C1_MDR_R & 0xFF;
-        I2C1_MCS_R = ((1 << 0) | (1 << 3)); //Configures START, RUN, STOP and DataAck bits
+        data[i] = I2C0_MDR_R & 0xFF;
+        I2C0_MCS_R = ((1 << 0) | (1 << 3)); //Configures START, RUN, STOP and DataAck bits
     }
-    I2C1_MCS_R = ((1 << 0) | (1 << 2));
+    I2C0_MCS_R = ((1 << 0) | (1 << 2));
     waitAndErrorCheck();
-    data[num_bytes - 1] = I2C1_MDR_R & 0xFF;
+    data[num_bytes - 1] = I2C0_MDR_R & 0xFF;
 }
+
 
 void I2CwriteByte(uint8_t Register, uint8_t Data)
 {

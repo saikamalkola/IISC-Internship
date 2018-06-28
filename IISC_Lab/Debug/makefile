@@ -8,7 +8,9 @@ GEN_OPTS__FLAG :=
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
+"./BMS.obj" \
 "./KinModel.obj" \
+"./MPU9250_YawCalc.obj" \
 "./PCA9685.obj" \
 "./UartSerial.obj" \
 "./Ultrasonic.obj" \
@@ -162,8 +164,8 @@ IISC_Lab.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "KinModel.obj" "PCA9685.obj" "UartSerial.obj" "Ultrasonic.obj" "WiFi_Comm.obj" "encoders.obj" "motors.obj" "odometry.obj" "selfNavigation.obj" "tm4c123gh6pm_startup_ccs.obj" 
-	-$(RM) "KinModel.d" "PCA9685.d" "UartSerial.d" "Ultrasonic.d" "WiFi_Comm.d" "encoders.d" "motors.d" "odometry.d" "selfNavigation.d" "tm4c123gh6pm_startup_ccs.d" 
+	-$(RM) "BMS.obj" "KinModel.obj" "MPU9250_YawCalc.obj" "PCA9685.obj" "UartSerial.obj" "Ultrasonic.obj" "WiFi_Comm.obj" "encoders.obj" "motors.obj" "odometry.obj" "selfNavigation.obj" "tm4c123gh6pm_startup_ccs.obj" 
+	-$(RM) "BMS.d" "KinModel.d" "MPU9250_YawCalc.d" "PCA9685.d" "UartSerial.d" "Ultrasonic.d" "WiFi_Comm.d" "encoders.d" "motors.d" "odometry.d" "selfNavigation.d" "tm4c123gh6pm_startup_ccs.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
